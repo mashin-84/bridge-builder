@@ -13,6 +13,9 @@
     overflow: hidden;
     background: #090d16;
     touch-action: none;
+    position: fixed;
+    top: 0;
+    left: 0;
   }
 
   body {
@@ -20,7 +23,6 @@
     color: #f8fafc;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Microsoft JhengHei", sans-serif;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
   }
@@ -28,125 +30,105 @@
   #app-container {
     width: 100vw;
     height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 8px 12px;
-    transform-origin: center center;
+    padding: env(safe-area-inset-top, 6px) env(safe-area-inset-right, 8px) env(safe-area-inset-bottom, 6px) env(safe-area-inset-left, 8px);
     box-sizing: border-box;
+    transform-origin: center center;
   }
 
-  /* 直向螢幕自動逆時針旋轉 90 度並等比自適應 */
+  /* 直立螢幕時強制逆時針旋轉 90 度並透過動態邊界自適應貼合 */
   @media (orientation: portrait) {
     #app-container {
-      width: 100vh;
-      height: 100vw;
+      width: 100dvh !important;
+      height: 100dvw !important;
       transform: rotate(-90deg);
       position: absolute;
-      top: calc(50% - 50vw);
-      left: calc(50% - 50vh);
-      padding: 6px 10px;
+      top: calc(50% - 50dvw);
+      left: calc(50% - 50dvh);
+      padding: env(safe-area-inset-right, 6px) env(safe-area-inset-bottom, 8px) env(safe-area-inset-left, 6px) env(safe-area-inset-top, 8px);
     }
   }
 
+  /* 方案 A：極簡單列頂部 HUD 資訊列 */
   .top-hud {
     width: 100%;
     max-width: 1240px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
-    flex-wrap: wrap;
+    margin-bottom: 4px;
     gap: 6px;
+    flex-shrink: 0;
   }
-  .badges-left {
-    display: flex;
-    gap: 6px;
+
+  .hud-stats-group {
+    display: inline-flex;
     align-items: center;
-    flex-wrap: wrap;
-  }
-  .hud-badge {
+    gap: 8px;
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     border-radius: 8px;
-    padding: 3px 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 52px;
-  }
-  .hud-badge .title { 
-    font-size: 8.5px; 
-    font-weight: 700; 
-    letter-spacing: 0.5px; 
+    padding: 4px 10px;
+    font-size: 11.5px;
+    font-weight: 700;
     color: #94a3b8;
   }
-  .hud-badge .num { 
-    font-size: 15px; 
-    font-weight: 800; 
-    color: #ffffff;
+  .hud-stats-group span {
     font-variant-numeric: tabular-nums;
   }
-  .hud-badge.score-badge .num { color: #38bdf8; }
-  .hud-badge.best-badge .num { color: #facc15; }
-  .hud-badge.record-badge .num { color: #34d399; }
+  .hud-stats-group .val-sky { color: #38bdf8; }
+  .hud-stats-group .val-yellow { color: #facc15; }
+  .hud-stats-group .val-green { color: #34d399; }
+  .hud-stats-group .divider { color: rgba(255, 255, 255, 0.2); }
 
-  .level-info-strip {
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-weight: 600;
-    color: #cbd5e1;
-    font-size: 12px;
-    display: flex;
-    gap: 10px;
+  .actions-right {
+    display: inline-flex;
+    gap: 4px;
     align-items: center;
   }
-  .level-info-strip span { 
-    color: #38bdf8; 
-    font-weight: 700;
-  }
 
-  .actions-right { display: flex; gap: 5px; flex-wrap: wrap; }
   button {
     font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 5px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(10px);
     color: #f1f5f9;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 3px;
     touch-action: manipulation;
+    white-space: nowrap;
   }
   button:active { transform: translateY(1px); }
 
   .btn-test { 
     background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-    border: 1px solid rgba(56, 189, 248, 0.4);
+    border: 1px solid rgba(56, 189, 248, 0.5);
     color: #ffffff;
-    box-shadow: 0 0 12px rgba(2, 132, 199, 0.35);
+    box-shadow: 0 0 10px rgba(2, 132, 199, 0.35);
+    padding: 5px 12px;
   }
   .btn-test.running { 
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    border-color: rgba(251, 191, 36, 0.4);
-    box-shadow: 0 0 12px rgba(217, 119, 6, 0.35);
+    border-color: rgba(251, 191, 36, 0.5);
+    box-shadow: 0 0 10px rgba(217, 119, 6, 0.35);
   }
   .btn-danger { 
-    background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
     color: #fca5a5;
   }
 
@@ -155,11 +137,10 @@
     width: 100%;
     max-width: 1240px;
     flex: 1;
-    max-height: calc(100% - 54px);
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.7);
     background: #0f172a;
     transform: translate3d(0, 0, 0);
   }
@@ -170,29 +151,30 @@
     touch-action: none;
   }
 
+  /* 懸浮模式切換按鈕 */
   #fab-tool-mode {
     position: absolute;
-    right: 16px;
-    bottom: 16px;
-    width: 48px;
-    height: 48px;
+    right: 14px;
+    bottom: 14px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 22px;
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(12px);
     border: 2px solid #38bdf8;
-    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
     cursor: pointer;
     z-index: 20;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   #fab-tool-mode.erase-mode {
     border-color: #f43f5e;
-    box-shadow: 0 0 16px rgba(244, 63, 94, 0.5);
-    background: rgba(40, 16, 24, 0.9);
+    box-shadow: 0 0 16px rgba(244, 63, 94, 0.55);
+    background: rgba(40, 16, 24, 0.92);
   }
   #fab-tool-mode:active {
     transform: scale(0.92);
@@ -210,20 +192,20 @@
 
   #status-bubble {
     position: absolute;
-    top: 14px;
+    top: 12px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 8px 16px;
-    border-radius: 10px;
-    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
     font-weight: 700;
     display: none;
     z-index: 15;
     border: 1px solid rgba(56, 189, 248, 0.4);
-    background: rgba(15, 23, 42, 0.92);
+    background: rgba(15, 23, 42, 0.94);
     backdrop-filter: blur(16px);
     color: #38bdf8;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
     text-align: center;
     max-width: 90%;
   }
@@ -237,116 +219,106 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(15, 23, 42, 0.94);
+    background: rgba(15, 23, 42, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(20px);
     border-radius: 16px;
-    padding: 20px 28px;
+    padding: 18px 24px;
     display: none;
     flex-direction: column;
     align-items: center;
     gap: 10px;
     z-index: 25;
     text-align: center;
-    max-width: 88%;
+    max-width: 86%;
   }
   #modal-welcome h2, #clear-dialog h2 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
     color: #f8fafc;
   }
   #modal-welcome .welcome-desc, #clear-dialog .score-display {
-    font-size: 13px;
+    font-size: 12.5px;
     color: #94a3b8;
     line-height: 1.5;
   }
   .dialog-buttons {
     display: flex;
-    gap: 10px;
-    margin-top: 6px;
+    gap: 8px;
+    margin-top: 4px;
   }
   .btn-primary { 
     background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     color: #ffffff; 
-    font-size: 13px; 
-    padding: 8px 16px; 
+    font-size: 12.5px; 
+    padding: 7px 16px; 
   }
   .btn-secondary { 
     background: rgba(255, 255, 255, 0.08); 
     color: #cbd5e1; 
-    font-size: 13px; 
-    padding: 8px 14px; 
+    font-size: 12.5px; 
+    padding: 7px 14px; 
   }
 
   #modal-levels {
     position: absolute;
     inset: 0;
-    background: rgba(11, 15, 25, 0.92);
+    background: rgba(11, 15, 25, 0.94);
     backdrop-filter: blur(16px);
     display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 30;
-    padding: 14px;
+    padding: 12px;
   }
   .level-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 8px;
-    max-width: 760px;
-    max-height: 70vh;
+    max-width: 740px;
+    max-height: 65vh;
     overflow-y: auto;
-    margin: 14px 0;
+    margin: 12px 0;
   }
   .level-card {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    padding: 8px 10px;
+    padding: 7px 8px;
     text-align: center;
     cursor: pointer;
-    min-width: 95px;
+    min-width: 88px;
   }
   .level-card.active { 
     background: rgba(56, 189, 248, 0.12); 
     border-color: rgba(56, 189, 248, 0.6); 
   }
-  .level-card .num { font-size: 12px; font-weight: 700; color: #f8fafc; }
-  .level-card .sub { font-size: 10px; color: #94a3b8; }
-  .level-card .best { font-size: 11px; font-weight: 700; color: #38bdf8; margin-top: 2px; }
+  .level-card .num { font-size: 11.5px; font-weight: 700; color: #f8fafc; }
+  .level-card .sub { font-size: 9.5px; color: #94a3b8; }
+  .level-card .best { font-size: 10.5px; font-weight: 700; color: #38bdf8; margin-top: 2px; }
 </style>
 </head>
 <body>
 
 <div id="app-container">
+  <!-- 方案 A：極簡單列頂部狀態與操作控制 -->
   <div class="top-hud">
-    <div class="badges-left">
-      <div class="hud-badge score-badge">
-        <span class="title">SCORE</span>
-        <span class="num" id="ui-score">0</span>
-      </div>
-      <div class="hud-badge best-badge">
-        <span class="title">BEST</span>
-        <span class="num" id="ui-best">0</span>
-      </div>
-      <div class="hud-badge total-badge">
-        <span class="title">TOTAL</span>
-        <span class="num" id="ui-total">0</span>
-      </div>
-      <div class="hud-badge record-badge">
-        <span class="title">RECORD</span>
-        <span class="num" id="ui-record">0</span>
-      </div>
-      <div class="level-info-strip">
-        <div>STAGE: <span id="ui-level-num">1 / 10</span></div>
-        <div>LOAD: <span id="ui-weight">1.4 t</span></div>
-        <div>BEAMS: <span id="ui-lines">0</span> / <span id="ui-budget">24</span></div>
-      </div>
+    <div class="hud-stats-group">
+      <span>關卡: <span class="val-sky" id="ui-level-num">1/10</span></span>
+      <span class="divider">|</span>
+      <span>載重: <span class="val-sky" id="ui-weight">1.4t</span></span>
+      <span class="divider">|</span>
+      <span>桿件: <span class="val-sky" id="ui-lines">0</span>/<span id="ui-budget">24</span></span>
+      <span class="divider">|</span>
+      <span>得分: <span class="val-yellow" id="ui-score">0</span></span>
+      <span class="divider">|</span>
+      <span>最佳: <span class="val-green" id="ui-record">0</span></span>
     </div>
+    
     <div class="actions-right">
-      <button id="btn-toggle-audio">🔊 音效</button>
+      <button id="btn-toggle-audio">🔊</button>
       <button id="btn-open-levels">選關</button>
       <button class="btn-danger" id="btn-clear">清空</button>
       <button id="btn-reset-score">重設</button>
@@ -355,10 +327,11 @@
   </div>
 
   <div id="stage-wrapper">
-    <svg id="game-svg" viewBox="0 0 900 460" preserveAspectRatio="xMidYMid meet"></svg>
+    <!-- ViewBox 調整為 90 70 720 370：聚焦橋樑跨距核心，減少山壁留白，節點放大約 35% -->
+    <svg id="game-svg" viewBox="90 70 720 370" preserveAspectRatio="xMidYMid meet"></svg>
     <div id="status-bubble"></div>
 
-    <!-- 模式切換按鈕（手機觸控） -->
+    <!-- 懸浮模式切換按鈕 -->
     <div id="fab-tool-mode" title="切換 建造/拆除">✏️</div>
 
     <div id="modal-welcome">
@@ -380,9 +353,9 @@
     </div>
 
     <div id="modal-levels">
-      <h2 style="color: #f8fafc; font-size: 20px; font-weight: 800;">CHOOSE STAGE</h2>
+      <h2 style="color: #f8fafc; font-size: 19px; font-weight: 800;">CHOOSE STAGE</h2>
       <div class="level-grid" id="grid-container"></div>
-      <button id="btn-close-levels" style="padding: 8px 20px;">返回峽谷</button>
+      <button id="btn-close-levels" style="padding: 7px 20px;">返回峽谷</button>
     </div>
   </div>
 </div>
@@ -676,7 +649,7 @@ class CanyonBridgeApp {
 
     this.currentStageIdx = 1;
     this.operationalState = "edit";
-    this.activeMobileTool = "build"; // "build" 或 "erase"
+    this.activeMobileTool = "build";
 
     this.isErasing = false;
     this.lastErasePt = null;
@@ -856,12 +829,12 @@ class CanyonBridgeApp {
 
         const dotGraphic = isBoundaryAnchor
           ? createSvgElement("rect", {
-              x: posX - 8, y: posY - 8, width: 16, height: 16, rx: 4,
-              fill: "#0284c7", stroke: "rgba(255, 255, 255, 0.9)", "stroke-width": 2
+              x: posX - 9, y: posY - 9, width: 18, height: 18, rx: 5,
+              fill: "#0284c7", stroke: "rgba(255, 255, 255, 0.95)", "stroke-width": 2.2
             })
           : createSvgElement("circle", {
-              cx: posX, cy: posY, r: 5.5,
-              fill: "#ffffff", stroke: "#0f172a", "stroke-width": 1.5
+              cx: posX, cy: posY, r: 6.5,
+              fill: "#ffffff", stroke: "#0f172a", "stroke-width": 1.8
             });
 
         dotGraphic.style.cursor = "pointer";
@@ -898,9 +871,9 @@ class CanyonBridgeApp {
 
     const isRoadComplete = this.isBridgeContinuityValid();
     if (!isRoadComplete) {
-      this.notifyStatus("教學步驟 1：手指按住連續拖曳，連通兩岸路面", false);
+      this.notifyStatus("教學步驟 1：手指連續拖曳連接路面", false);
     } else {
-      this.notifyStatus("教學步驟 2：從路面往下引線組成「三角形」支撐，完成後點擊出發", false);
+      this.notifyStatus("教學步驟 2：往下連線組成三角形桁架支撐", false);
     }
   }
 
@@ -959,13 +932,12 @@ class CanyonBridgeApp {
     const stageData = STAGES[this.currentStageIdx];
     const count = this.members.size;
 
-    document.getElementById("ui-level-num").textContent = stageData.isTutorial ? "TUTORIAL" : `${stageData.stage} / ${STAGES.length - 1}`;
-    document.getElementById("ui-weight").textContent = `${stageData.weight.toFixed(1)} t`;
+    document.getElementById("ui-level-num").textContent = stageData.isTutorial ? "0" : `${stageData.stage}/${STAGES.length - 1}`;
+    document.getElementById("ui-weight").textContent = `${stageData.weight.toFixed(1)}t`;
     document.getElementById("ui-lines").textContent = `${count}`;
     document.getElementById("ui-budget").textContent = `${stageData.budget}`;
 
-    document.getElementById("ui-best").textContent = stageData.isTutorial ? "-" : this.fetchStoredBest(this.currentStageIdx);
-    document.getElementById("ui-total").textContent = this.aggregateTotalScore();
+    document.getElementById("ui-score").textContent = stageData.isTutorial ? "-" : this.fetchStoredBest(this.currentStageIdx);
     document.getElementById("ui-record").textContent = this.fetchHistoricalRecord();
 
     const triggerBtn = document.getElementById("btn-test");
@@ -980,7 +952,7 @@ class CanyonBridgeApp {
 
   syncAudioButton() {
     const btn = document.getElementById("btn-toggle-audio");
-    if (btn) btn.textContent = this.audio.muted ? "🔇 靜音" : "🔊 音效";
+    if (btn) btn.textContent = this.audio.muted ? "🔇" : "🔊";
   }
 
   notifyStatus(text, isDanger = false) {
@@ -1044,7 +1016,7 @@ class CanyonBridgeApp {
     const isRoadSeg = (n1.row === ROAD_ROW_INDEX && n2.row === ROAD_ROW_INDEX);
     const beamLine = createSvgElement("line", {
       stroke: "#64748b",
-      "stroke-width": isRoadSeg ? 7 : 5,
+      "stroke-width": isRoadSeg ? 7.5 : 5.5,
       "stroke-linecap": "round"
     });
     beamLine.style.cursor = "pointer";
@@ -1109,7 +1081,7 @@ class CanyonBridgeApp {
         let tint = m.isRoad ? "#64748b" : "#475569";
         if (isSimulating) tint = this.resolveStressPalette(m.stressRatio);
         m.element.setAttribute("stroke", tint);
-        m.element.setAttribute("stroke-width", m.isRoad ? "7" : "5");
+        m.element.setAttribute("stroke-width", m.isRoad ? "7.5" : "5.5");
         m.element.removeAttribute("stroke-dasharray");
       }
     }
@@ -1146,7 +1118,7 @@ class CanyonBridgeApp {
 
       const isChosen = (dragPathSet.has(n.id));
       n.element.setAttribute("fill", isChosen ? "#38bdf8" : "#ffffff");
-      n.element.setAttribute("r", isChosen ? 7 : 5);
+      n.element.setAttribute("r", isChosen ? 8.5 : 6.5);
     }
   }
 
@@ -1600,7 +1572,7 @@ class CanyonBridgeApp {
       let lastNode = this.nodes.get(this.dragPathNodeIds[this.dragPathNodeIds.length - 1]);
 
       let closestNode = null;
-      let minDis = 32;
+      let minDis = 36; // 配合聚焦放大，放寬觸控磁吸判定範圍
 
       for (const n of this.nodes.values()) {
         const d = Math.hypot(n.x - mousePt.x, n.y - mousePt.y);
@@ -1630,7 +1602,7 @@ class CanyonBridgeApp {
         const nB = this.nodes.get(this.dragPathNodeIds[i + 1]);
         const fixedSeg = createSvgElement("line", {
           x1: nA.x, y1: nA.y, x2: nB.x, y2: nB.y,
-          stroke: "#38bdf8", "stroke-width": 4, "stroke-linecap": "round",
+          stroke: "#38bdf8", "stroke-width": 4.5, "stroke-linecap": "round",
           "stroke-dasharray": "6 6", opacity: "0.9"
         });
         fixedSeg.style.pointerEvents = "none";
@@ -1642,7 +1614,7 @@ class CanyonBridgeApp {
       const activeSeg = createSvgElement("line", {
         x1: lastNode.x, y1: lastNode.y, x2: mousePt.x, y2: mousePt.y,
         stroke: isTailValid ? "#38bdf8" : "#f43f5e",
-        "stroke-width": 4, "stroke-linecap": "round",
+        "stroke-width": 4.5, "stroke-linecap": "round",
         "stroke-dasharray": "6 6", opacity: "0.9"
       });
       activeSeg.style.pointerEvents = "none";
@@ -1739,7 +1711,30 @@ class CanyonBridgeApp {
   }
 }
 
+// 監聽並自動修正行動端視窗動態網址列位移
+function updateAppViewport() {
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const container = document.getElementById("app-container");
+  if (!container) return;
+
+  if (isPortrait) {
+    container.style.width = `${window.innerHeight}px`;
+    container.style.height = `${window.innerWidth}px`;
+    container.style.top = `calc(50% - ${window.innerWidth / 2}px)`;
+    container.style.left = `calc(50% - ${window.innerHeight / 2}px)`;
+  } else {
+    container.style.width = "100vw";
+    container.style.height = "100vh";
+    container.style.top = "0px";
+    container.style.left = "0px";
+  }
+}
+
+window.addEventListener("resize", updateAppViewport);
+window.addEventListener("orientationchange", updateAppViewport);
+
 window.onload = () => {
+  updateAppViewport();
   const canvasSvg = document.getElementById("game-svg");
   new CanyonBridgeApp(canvasSvg);
 };
