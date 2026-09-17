@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Bridge Builder - Canyon Expedition (Mobile)</title>
+<style>
+  * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
+  
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #090d16;
+    touch-action: none;
+  }
+
+  body {
+    background: linear-gradient(135deg, #090d16 0%, #111827 50%, #1a2234 100%);
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Microsoft JhengHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #app-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 12px;
+    transform-origin: center center;
+    box-sizing: border-box;
+  }
+
+  /* 直向螢幕自動逆時針旋轉 90 度並等比自適應 */
+  @media (orientation: portrait) {
+    #app-container {
+      width: 100vh;
+      height: 100vw;
+      transform: rotate(-90deg);
+      position: absolute;
+      top: calc(50% - 50vw);
+      left: calc(50% - 50vh);
+      padding: 6px 10px;
+    }
+  }
+
+  .top-hud {
+    width: 100%;
+    max-width: 1240px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .badges-left {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .hud-badge {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 3px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 52px;
+  }
+  .hud-badge .title { 
+    font-size: 8.5px; 
+    font-weight: 700; 
+    letter-spacing: 0.5px; 
+    color: #94a3b8;
+  }
+  .hud-badge .num { 
+    font-size: 15px; 
+    font-weight: 800; 
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+  }
+  .hud-badge.score-badge .num { color: #38bdf8; }
+  .hud-badge.best-badge .num { color: #facc15; }
+  .hud-badge.record-badge .num { color: #34d399; }
+
+  .level-info-strip {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-weight: 600;
+    color: #cbd5e1;
+    font-size: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .level-info-strip span { 
+    color: #38bdf8; 
+    font-weight: 700;
+  }
+
+  .actions-right { display: flex; gap: 5px; flex-wrap: wrap; }
+  button {
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(10px);
+    color: #f1f5f9;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    touch-action: manipulation;
+  }
+  button:active { transform: translateY(1px); }
+
+  .btn-test { 
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(2, 132, 199, 0.35);
+  }
+  .btn-test.running { 
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    border-color: rgba(251, 191, 36, 0.4);
+    box-shadow: 0 0 12px rgba(217, 119, 6, 0.35);
+  }
+  .btn-danger { 
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+  }
+
+  #stage-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1240px;
+    flex: 1;
+    max-height: calc(100% - 54px);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+    background: #0f172a;
+    transform: translate3d(0, 0, 0);
+  }
+  svg#game-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  #fab-tool-mode {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    border: 2px solid #38bdf8;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    cursor: pointer;
+    z-index: 20;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #fab-tool-mode.erase-mode {
+    border-color: #f43f5e;
+    box-shadow: 0 0 16px rgba(244, 63, 94, 0.5);
+    background: rgba(40, 16, 24, 0.9);
+  }
+  #fab-tool-mode:active {
+    transform: scale(0.92);
+  }
+
+  @keyframes snapPulse {
+    0%, 100% { opacity: 0.9; stroke-width: 6px; filter: drop-shadow(0 0 6px #f43f5e); }
+    50% { opacity: 0.15; stroke-width: 2px; filter: none; }
+  }
+  .beam-broken-flash {
+    animation: snapPulse 0.35s infinite ease-in-out !important;
+    stroke: #f43f5e !important;
+    stroke-dasharray: 6 6 !important;
+  }
+
+  #status-bubble {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    display: none;
+    z-index: 15;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(16px);
+    color: #38bdf8;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    max-width: 90%;
+  }
+  #status-bubble.danger {
+    border-color: rgba(244, 63, 94, 0.4);
+    color: #fda4af;
+  }
+
+  #modal-welcome, #clear-dialog {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 20px 28px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    z-index: 25;
+    text-align: center;
+    max-width: 88%;
+  }
+  #modal-welcome h2, #clear-dialog h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #f8fafc;
+  }
+  #modal-welcome .welcome-desc, #clear-dialog .score-display {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+  .dialog-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .btn-primary { 
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff; 
+    font-size: 13px; 
+    padding: 8px 16px; 
+  }
+  .btn-secondary { 
+    background: rgba(255, 255, 255, 0.08); 
+    color: #cbd5e1; 
+    font-size: 13px; 
+    padding: 8px 14px; 
+  }
+
+  #modal-levels {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 15, 25, 0.92);
+    backdrop-filter: blur(16px);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    padding: 14px;
+  }
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    max-width: 760px;
+    max-height: 70vh;
+    overflow-y: auto;
+    margin: 14px 0;
+  }
+  .level-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+    cursor: pointer;
+    min-width: 95px;
+  }
+  .level-card.active { 
+    background: rgba(56, 189, 248, 0.12); 
+    border-color: rgba(56, 189, 248, 0.6); 
+  }
+  .level-card .num { font-size: 12px; font-weight: 700; color: #f8fafc; }
+  .level-card .sub { font-size: 10px; color: #94a3b8; }
+  .level-card .best { font-size: 11px; font-weight: 700; color: #38bdf8; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div id="app-container">
+  <div class="top-hud">
+    <div class="badges-left">
+      <div class="hud-badge score-badge">
+        <span class="title">SCORE</span>
+        <span class="num" id="ui-score">0</span>
+      </div>
+      <div class="hud-badge best-badge">
+        <span class="title">BEST</span>
+        <span class="num" id="ui-best">0</span>
+      </div>
+      <div class="hud-badge total-badge">
+        <span class="title">TOTAL</span>
+        <span class="num" id="ui-total">0</span>
+      </div>
+      <div class="hud-badge record-badge">
+        <span class="title">RECORD</span>
+        <span class="num" id="ui-record">0</span>
+      </div>
+      <div class="level-info-strip">
+        <div>STAGE: <span id="ui-level-num">1 / 10</span></div>
+        <div>LOAD: <span id="ui-weight">1.4 t</span></div>
+        <div>BEAMS: <span id="ui-lines">0</span> / <span id="ui-budget">24</span></div>
+      </div>
+    </div>
+    <div class="actions-right">
+      <button id="btn-toggle-audio">🔊 音效</button>
+      <button id="btn-open-levels">選關</button>
+      <button class="btn-danger" id="btn-clear">清空</button>
+      <button id="btn-reset-score">重設</button>
+      <button class="btn-test" id="btn-test">出發</button>
+    </div>
+  </div>
+
+  <div id="stage-wrapper">
+    <svg id="game-svg" viewBox="0 0 900 460" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="status-bubble"></div>
+
+    <!-- 模式切換按鈕（手機觸控） -->
+    <div id="fab-tool-mode" title="切換 建造/拆除">✏️</div>
+
+    <div id="modal-welcome">
+      <h2>需要進入教學關嗎?</h2>
+      <div class="welcome-desc">首次遊玩嗎？您可以先進入教學關熟悉操作，或直接挑戰正式關卡。</div>
+      <div class="dialog-buttons">
+        <button class="btn-primary" id="btn-welcome-tutorial">我需要教學</button>
+        <button class="btn-secondary" id="btn-welcome-skip">直接踩油門出發</button>
+      </div>
+    </div>
+
+    <div id="clear-dialog">
+      <h2>STAGE CLEAR</h2>
+      <div class="score-display" id="dialog-score-text">本關得分：0 分</div>
+      <div class="dialog-buttons">
+        <button class="btn-secondary" id="btn-dialog-retry">重新調整</button>
+        <button class="btn-primary" id="btn-dialog-next">前往下一關</button>
+      </div>
+    </div>
+
+    <div id="modal-levels">
+      <h2 style="color: #f8fafc; font-size: 20px; font-weight: 800;">CHOOSE STAGE</h2>
+      <div class="level-grid" id="grid-container"></div>
+      <button id="btn-close-levels" style="padding: 8px 20px;">返回峽谷</button>
+    </div>
+  </div>
+</div>
+
+<script>
+class ProceduralAudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.muted = localStorage.getItem("bridge_builder_audio_muted") === "true";
+    this.engineOsc = null;
+    this.engineGain = null;
+    this.creakTimer = 0;
+    this.deleteTimer = 0;
+  }
+
+  ensureContext() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === "suspended") {
+      this.ctx.resume();
+    }
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    localStorage.setItem("bridge_builder_audio_muted", this.muted ? "true" : "false");
+    if (this.muted) this.stopEngineSound();
+    return !this.muted;
+  }
+
+  playNodePlace() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(420, t);
+    osc.frequency.exponentialRampToValueAtTime(760, t + 0.08);
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.09);
+  }
+
+  playMemberDelete() {
+    if (this.muted) return;
+    const now = Date.now();
+    if (now - this.deleteTimer < 120) return;
+    this.deleteTimer = now;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(260, t);
+    osc.frequency.exponentialRampToValueAtTime(120, t + 0.09);
+    gain.gain.setValueAtTime(0.22, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
+
+  startEngineSound() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx || this.engineOsc) return;
+    const t = this.ctx.currentTime;
+    this.engineOsc = this.ctx.createOscillator();
+    this.engineGain = this.ctx.createGain();
+    this.engineOsc.type = "sawtooth";
+    this.engineOsc.frequency.setValueAtTime(58, t);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(180, t);
+    this.engineGain.gain.setValueAtTime(0.001, t);
+    this.engineGain.gain.linearRampToValueAtTime(0.08, t + 0.3);
+    this.engineOsc.connect(filter);
+    filter.connect(this.engineGain);
+    this.engineGain.connect(this.ctx.destination);
+    this.engineOsc.start(t);
+  }
+
+  updateEngineTone(pitchMultiplier = 1) {
+    if (this.engineOsc && this.ctx && !this.muted) {
+      const baseFreq = 58 * Math.max(0.7, Math.min(1.8, pitchMultiplier));
+      this.engineOsc.frequency.setTargetAtTime(baseFreq, this.ctx.currentTime, 0.08);
+    }
+  }
+
+  stopEngineSound() {
+    if (this.engineOsc && this.ctx) {
+      const t = this.ctx.currentTime;
+      try {
+        this.engineGain.gain.linearRampToValueAtTime(0.001, t + 0.15);
+        this.engineOsc.stop(t + 0.16);
+      } catch (e) {}
+      this.engineOsc = null;
+      this.engineGain = null;
+    }
+  }
+
+  playStressCreak() {
+    if (this.muted) return;
+    const now = Date.now();
+    if (now - this.creakTimer < 450) return;
+    this.creakTimer = now;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(840, t);
+    osc.frequency.linearRampToValueAtTime(1100, t + 0.06);
+    osc.frequency.linearRampToValueAtTime(720, t + 0.13);
+    gain.gain.setValueAtTime(0.03, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.15);
+  }
+
+  playBeamSnap() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gainOsc = this.ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(240, t);
+    osc.frequency.exponentialRampToValueAtTime(45, t + 0.22);
+    gainOsc.gain.setValueAtTime(0.55, t);
+    gainOsc.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    osc.connect(gainOsc);
+    gainOsc.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.23);
+
+    const bufferSize = this.ctx.sampleRate * 0.14;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.28));
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseFilter = this.ctx.createBiquadFilter();
+    noiseFilter.type = "bandpass";
+    noiseFilter.frequency.setValueAtTime(1400, t);
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.45, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(this.ctx.destination);
+    noise.start(t);
+  }
+
+  playCrashImpact() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(110, t);
+    osc.frequency.exponentialRampToValueAtTime(28, t + 0.45);
+    gain.gain.setValueAtTime(0.7, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.46);
+  }
+
+  playVictoryHorn() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const notes = [440, 554.37, 659.25];
+    const t = this.ctx.currentTime;
+    notes.forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, t + i * 0.1);
+      gain.gain.setValueAtTime(0.001, t + i * 0.1);
+      gain.gain.linearRampToValueAtTime(0.2, t + i * 0.1 + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.42);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t + i * 0.1);
+      osc.stop(t + i * 0.1 + 0.44);
+    });
+  }
+}
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const VIEW_W = 900;
+const VIEW_H = 460;
+const ROAD_Y = 240;
+const CANYON_FLOOR_Y = 410;
+
+const MAX_SINK_LIMIT_Y = 345;
+const MAX_ALLOWED_PITCH = 30;
+
+const GRID_COL_COUNT = 9;
+const GRID_ROW_COUNT = 5;
+const LEFT_ANCHOR_X = 150;
+const RIGHT_ANCHOR_X = 750;
+const COL_STEP = (RIGHT_ANCHOR_X - LEFT_ANCHOR_X) / (GRID_COL_COUNT - 1);
+const ROW_START_Y = 90;
+const ROW_STEP = 75;
+const ROAD_ROW_INDEX = 2;
+const MAX_LINK_DISTANCE = 110;
+
+const FIXED_DELTA = 1 / 60;
+const MAX_PHYSICS_SUB_TICKS = 5;
+
+const INTEGRATION_SUB_STEPS = 8;
+const DAMPING_NORMAL = 0.985;
+const DAMPING_STABILIZE = 0.920;
+const STABILIZE_TICKS = 25;
+
+const GRAVITY_ACCEL = 200;
+const MEMBER_STIFFNESS = 14500;
+const LIVE_LOAD_FACTOR = 420;
+
+const TENSILE_LIMIT = 7200;
+const ROAD_TENSILE_LIMIT = 7800;
+const COMPRESSIVE_REF_CAPACITY = 6500;
+const BUCKLING_NOMINAL_LENGTH = 75;
+const VEHICLE_SPEED = 90;
+const TERMINAL_VELOCITY = 750;
+
+const SNAP_COOLDOWN_TICKS = 8;
+const STORAGE_SCORE_KEY = "canyon_bridge_v10_dynamic_economy";
+
+const STAGES = [
+  { stage: 0, isTutorial: true, weight: 0.6, mult: 1.0, budget: 30, title: "TUTORIAL" },
+  { stage: 1, isTutorial: false, weight: 1.4, mult: 1.0, budget: 24 },
+  { stage: 2, isTutorial: false, weight: 2.0, mult: 1.2, budget: 24 },
+  { stage: 3, isTutorial: false, weight: 2.6, mult: 1.5, budget: 32 },
+  { stage: 4, isTutorial: false, weight: 3.5, mult: 1.85, budget: 36 },
+  { stage: 5, isTutorial: false, weight: 4.8, mult: 2.25, budget: 42 },
+  { stage: 6, isTutorial: false, weight: 6.5, mult: 2.7, budget: 48 },
+  { stage: 7, isTutorial: false, weight: 8.6, mult: 3.2, budget: 52 },
+  { stage: 8, isTutorial: false, weight: 11.2, mult: 3.75, budget: 58 },
+  { stage: 9, isTutorial: false, weight: 14.2, mult: 4.35, budget: 62 },
+  { stage: 10, isTutorial: false, weight: 17.5, mult: 5.0, budget: 66 }
+];
+
+function createSvgElement(tag, attrs = {}) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+const pointKey = (c, r) => `p_${c}_${r}`;
+const linkKey = (p1, p2) => (p1 < p2 ? `${p1}_${p2}` : `${p2}_${p1}`);
+const euclideanDistance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function checkSegmentsIntersect(p1, p2, p3, p4) {
+  const ccw = (a, b, c) => (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
+  return (ccw(p1, p3, p4) !== ccw(p2, p3, p4)) && (ccw(p1, p2, p3) !== ccw(p1, p2, p4));
+}
+
+const evaluateCompressionLimit = (len) => {
+  const theoretical = COMPRESSIVE_REF_CAPACITY * Math.pow(BUCKLING_NOMINAL_LENGTH / len, 2);
+  const floorCapacity = COMPRESSIVE_REF_CAPACITY * 0.55;
+  return Math.max(floorCapacity, theoretical);
+};
+
+class CanyonBridgeApp {
+  constructor(svgElement) {
+    this.svg = svgElement;
+    this.stageWrapper = document.getElementById("stage-wrapper");
+    this.audio = new ProceduralAudioEngine();
+
+    this.currentStageIdx = 1;
+    this.operationalState = "edit";
+    this.activeMobileTool = "build"; // "build" 或 "erase"
+
+    this.isErasing = false;
+    this.lastErasePt = null;
+
+    this.dragPathNodeIds = [];
+    this.nodes = new Map();
+    this.members = new Map();
+    this.roadSequence = [];
+
+    this.vehicle = null;
+    this.simulationOutcome = null;
+    this.stabilizeCounter = 0;
+    this.snapCooldown = 0;
+    this.rafHandle = null;
+
+    this.lastFrameTime = 0;
+    this.timeAccumulator = 0;
+    this.shakeIntensity = 0;
+
+    this.buildScenicCanyon();
+    this.generateNodeGrid();
+    this.bindUserInteractions();
+    this.syncAudioButton();
+
+    this.showWelcomeModal();
+  }
+
+  showWelcomeModal() {
+    this.switchStage(1);
+    const modal = document.getElementById("modal-welcome");
+    if (modal) modal.style.display = "flex";
+  }
+
+  hideWelcomeModal() {
+    const modal = document.getElementById("modal-welcome");
+    if (modal) modal.style.display = "none";
+  }
+
+  buildScenicCanyon() {
+    this.svg.innerHTML = "";
+
+    const defs = createSvgElement("defs");
+    defs.innerHTML = `
+      <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#0f172a" />
+        <stop offset="55%" stop-color="#1e293b" />
+        <stop offset="100%" stop-color="#334155" />
+      </linearGradient>
+      <linearGradient id="farCanyonGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1e293b" />
+        <stop offset="100%" stop-color="#0f172a" />
+      </linearGradient>
+      <linearGradient id="cliffLeftGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#1e293b" />
+        <stop offset="60%" stop-color="#334155" />
+        <stop offset="100%" stop-color="#475569" />
+      </linearGradient>
+      <linearGradient id="cliffRightGrad" x1="1" y1="0" x2="0" y2="0">
+        <stop offset="0%" stop-color="#1e293b" />
+        <stop offset="60%" stop-color="#334155" />
+        <stop offset="100%" stop-color="#475569" />
+      </linearGradient>
+      <linearGradient id="fogGrad1" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%" stop-color="#090d16" stop-opacity="0.95" />
+        <stop offset="40%" stop-color="#1e293b" stop-opacity="0.6" />
+        <stop offset="100%" stop-color="#334155" stop-opacity="0" />
+      </linearGradient>
+      <linearGradient id="mistStream" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#38bdf8" stop-opacity="0" />
+        <stop offset="30%" stop-color="#38bdf8" stop-opacity="0.15" />
+        <stop offset="70%" stop-color="#818cf8" stop-opacity="0.12" />
+        <stop offset="100%" stop-color="#818cf8" stop-opacity="0" />
+      </linearGradient>
+    `;
+    this.svg.appendChild(defs);
+
+    this.svg.appendChild(createSvgElement("rect", {
+      x: 0, y: 0, width: VIEW_W, height: VIEW_H, fill: "url(#skyGrad)"
+    }));
+
+    const farMountains = createSvgElement("polygon", {
+      points: "0,280 90,210 180,250 290,190 390,240 480,180 580,230 680,170 780,220 900,160 900,460 0,460",
+      fill: "url(#farCanyonGrad)",
+      opacity: 0.65
+    });
+    this.svg.appendChild(farMountains);
+
+    const midLeftMountain = createSvgElement("polygon", {
+      points: "0,160 80,190 140,290 170,460 0,460",
+      fill: "#172033",
+      opacity: 0.8
+    });
+    const midRightMountain = createSvgElement("polygon", {
+      points: "900,140 810,180 740,270 710,460 900,460",
+      fill: "#172033",
+      opacity: 0.8
+    });
+    this.svg.append(midLeftMountain, midRightMountain);
+
+    const leftCliff = createSvgElement("polygon", {
+      points: `0,0 ${LEFT_ANCHOR_X},0 ${LEFT_ANCHOR_X},${ROAD_Y} ${LEFT_ANCHOR_X - 10},${ROAD_Y + 35} ${LEFT_ANCHOR_X - 35},${ROAD_Y + 70} ${LEFT_ANCHOR_X - 18},${ROAD_Y + 120} ${LEFT_ANCHOR_X - 45},${ROAD_Y + 170} ${LEFT_ANCHOR_X - 25},${VIEW_H} 0,${VIEW_H}`,
+      fill: "url(#cliffLeftGrad)"
+    });
+
+    const leftCliffFace = createSvgElement("polygon", {
+      points: `${LEFT_ANCHOR_X},${ROAD_Y} ${LEFT_ANCHOR_X - 10},${ROAD_Y + 35} ${LEFT_ANCHOR_X - 45},${ROAD_Y + 60} ${LEFT_ANCHOR_X - 55},${ROAD_Y + 25} ${LEFT_ANCHOR_X - 20},${ROAD_Y}`,
+      fill: "#64748b",
+      opacity: 0.35
+    });
+
+    const rightCliff = createSvgElement("polygon", {
+      points: `900,0 ${RIGHT_ANCHOR_X},0 ${RIGHT_ANCHOR_X},${ROAD_Y} ${RIGHT_ANCHOR_X + 12},${ROAD_Y + 35} ${RIGHT_ANCHOR_X + 40},${ROAD_Y + 80} ${RIGHT_ANCHOR_X + 22},${ROAD_Y + 130} ${RIGHT_ANCHOR_X + 50},${ROAD_Y + 175} ${RIGHT_ANCHOR_X + 30},${VIEW_H} 900,${VIEW_H}`,
+      fill: "url(#cliffRightGrad)"
+    });
+
+    const rightCliffFace = createSvgElement("polygon", {
+      points: `${RIGHT_ANCHOR_X},${ROAD_Y} ${RIGHT_ANCHOR_X + 12},${ROAD_Y + 35} ${RIGHT_ANCHOR_X + 50},${ROAD_Y + 65} ${RIGHT_ANCHOR_X + 60},${ROAD_Y + 20} ${RIGHT_ANCHOR_X + 20},${ROAD_Y}`,
+      fill: "#64748b",
+      opacity: 0.35
+    });
+
+    const leftRoad = createSvgElement("rect", {
+      x: 0, y: ROAD_Y - 4, width: LEFT_ANCHOR_X, height: 10, fill: "#0f172a", rx: 2
+    });
+    const leftRoadEdge = createSvgElement("rect", {
+      x: 0, y: ROAD_Y - 4, width: LEFT_ANCHOR_X, height: 2, fill: "#38bdf8", opacity: 0.8
+    });
+    const rightRoad = createSvgElement("rect", {
+      x: RIGHT_ANCHOR_X, y: ROAD_Y - 4, width: VIEW_W - RIGHT_ANCHOR_X, height: 10, fill: "#0f172a", rx: 2
+    });
+    const rightRoadEdge = createSvgElement("rect", {
+      x: RIGHT_ANCHOR_X, y: ROAD_Y - 4, width: VIEW_W - RIGHT_ANCHOR_X, height: 2, fill: "#38bdf8", opacity: 0.8
+    });
+
+    this.svg.append(leftCliff, leftCliffFace, rightCliff, rightCliffFace, leftRoad, leftRoadEdge, rightRoad, rightRoadEdge);
+
+    this.svg.appendChild(createSvgElement("rect", {
+      x: 0, y: ROAD_Y + 50, width: VIEW_W, height: VIEW_H - (ROAD_Y + 50), fill: "url(#fogGrad1)"
+    }));
+
+    const mist1 = createSvgElement("ellipse", { cx: 450, cy: CANYON_FLOOR_Y - 10, rx: 320, ry: 35, fill: "url(#mistStream)" });
+    const mist2 = createSvgElement("ellipse", { cx: 420, cy: CANYON_FLOOR_Y + 25, rx: 420, ry: 45, fill: "url(#mistStream)" });
+    this.svg.append(mist1, mist2);
+
+    this.svg.appendChild(createSvgElement("line", {
+      x1: LEFT_ANCHOR_X, y1: ROAD_Y, x2: RIGHT_ANCHOR_X, y2: ROAD_Y,
+      stroke: "#38bdf8", "stroke-width": 1.5, "stroke-dasharray": "4 6", opacity: 0.35
+    }));
+
+    this.memberLayer = createSvgElement("g");
+    this.previewLayer = createSvgElement("g");
+    this.nodeLayer = createSvgElement("g");
+    this.vehicleLayer = createSvgElement("g");
+    this.svg.append(this.memberLayer, this.previewLayer, this.nodeLayer, this.vehicleLayer);
+  }
+
+  generateNodeGrid() {
+    this.nodes.clear();
+    this.roadSequence = [];
+
+    for (let c = 0; c < GRID_COL_COUNT; c++) {
+      const posX = LEFT_ANCHOR_X + c * COL_STEP;
+      for (let r = 0; r < GRID_ROW_COUNT; r++) {
+        const posY = ROW_START_Y + r * ROW_STEP;
+        const isBoundaryAnchor = (c === 0 || c === GRID_COL_COUNT - 1);
+        const nodeObj = {
+          id: pointKey(c, r),
+          x: posX, y: posY,
+          vx: 0, vy: 0,
+          mass: 1.0,
+          baseX: posX, baseY: posY,
+          isFixed: isBoundaryAnchor,
+          col: c, row: r
+        };
+        this.nodes.set(nodeObj.id, nodeObj);
+        if (r === ROAD_ROW_INDEX) this.roadSequence[c] = nodeObj;
+
+        const dotGraphic = isBoundaryAnchor
+          ? createSvgElement("rect", {
+              x: posX - 8, y: posY - 8, width: 16, height: 16, rx: 4,
+              fill: "#0284c7", stroke: "rgba(255, 255, 255, 0.9)", "stroke-width": 2
+            })
+          : createSvgElement("circle", {
+              cx: posX, cy: posY, r: 5.5,
+              fill: "#ffffff", stroke: "#0f172a", "stroke-width": 1.5
+            });
+
+        dotGraphic.style.cursor = "pointer";
+        dotGraphic.dataset.nodeId = nodeObj.id;
+        nodeObj.element = dotGraphic;
+        this.nodeLayer.appendChild(dotGraphic);
+      }
+    }
+  }
+
+  switchStage(idx) {
+    const prevIdx = this.currentStageIdx;
+    const isSwitchingWithTutorial = (idx === 0 || prevIdx === 0);
+
+    this.currentStageIdx = idx;
+    this.abortSimulation();
+
+    if (isSwitchingWithTutorial) {
+      this.removeAllMembers();
+    }
+
+    this.hideOutcomeModal();
+    this.syncDashboard();
+    this.updateTutorialGuidance();
+  }
+
+  updateTutorialGuidance() {
+    const stageData = STAGES[this.currentStageIdx];
+    if (!stageData.isTutorial) {
+      this.dismissStatus();
+      return;
+    }
+    if (this.operationalState !== "edit") return;
+
+    const isRoadComplete = this.isBridgeContinuityValid();
+    if (!isRoadComplete) {
+      this.notifyStatus("教學步驟 1：手指按住連續拖曳，連通兩岸路面", false);
+    } else {
+      this.notifyStatus("教學步驟 2：從路面往下引線組成「三角形」支撐，完成後點擊出發", false);
+    }
+  }
+
+  calculateStageScore(memberCount, stageIdx) {
+    const stageData = STAGES[stageIdx];
+    if (stageData.isTutorial) return 100;
+    const baseReward = 600 + ((stageIdx - 1) * 120);
+    const savedBeams = Math.max(0, stageData.budget - memberCount);
+    const efficiencyBonus = Math.round(savedBeams * 22 * stageData.mult);
+    return baseReward + efficiencyBonus;
+  }
+
+  fetchStoredBest(idx) {
+    return parseInt(localStorage.getItem(`${STORAGE_SCORE_KEY}_best_${idx}`) || "0", 10);
+  }
+
+  commitBestScore(idx, score) {
+    const stageData = STAGES[idx];
+    if (stageData.isTutorial) return;
+    const previous = this.fetchStoredBest(idx);
+    if (score > previous) {
+      localStorage.setItem(`${STORAGE_SCORE_KEY}_best_${idx}`, score);
+    }
+    const sumTotal = this.aggregateTotalScore();
+    const historicalRecord = this.fetchHistoricalRecord();
+    if (sumTotal > historicalRecord) {
+      localStorage.setItem(`${STORAGE_SCORE_KEY}_record`, sumTotal);
+    }
+  }
+
+  aggregateTotalScore() {
+    let sum = 0;
+    for (let i = 1; i < STAGES.length; i++) {
+      sum += this.fetchStoredBest(i);
+    }
+    return sum;
+  }
+
+  fetchHistoricalRecord() {
+    return parseInt(localStorage.getItem(`${STORAGE_SCORE_KEY}_record`) || "0", 10);
+  }
+
+  wipeAllScores() {
+    for (let i = 1; i < STAGES.length; i++) {
+      localStorage.removeItem(`${STORAGE_SCORE_KEY}_best_${i}`);
+    }
+    localStorage.removeItem(`${STORAGE_SCORE_KEY}_record`);
+    document.getElementById("ui-score").textContent = "0";
+    document.getElementById("ui-record").textContent = "0";
+    this.syncDashboard();
+    this.notifyStatus("成績與紀錄已完全重置", true);
+    setTimeout(() => this.updateTutorialGuidance(), 1400);
+  }
+
+  syncDashboard() {
+    const stageData = STAGES[this.currentStageIdx];
+    const count = this.members.size;
+
+    document.getElementById("ui-level-num").textContent = stageData.isTutorial ? "TUTORIAL" : `${stageData.stage} / ${STAGES.length - 1}`;
+    document.getElementById("ui-weight").textContent = `${stageData.weight.toFixed(1)} t`;
+    document.getElementById("ui-lines").textContent = `${count}`;
+    document.getElementById("ui-budget").textContent = `${stageData.budget}`;
+
+    document.getElementById("ui-best").textContent = stageData.isTutorial ? "-" : this.fetchStoredBest(this.currentStageIdx);
+    document.getElementById("ui-total").textContent = this.aggregateTotalScore();
+    document.getElementById("ui-record").textContent = this.fetchHistoricalRecord();
+
+    const triggerBtn = document.getElementById("btn-test");
+    if (this.operationalState === "edit") {
+      triggerBtn.textContent = "出發";
+      triggerBtn.classList.remove("running");
+    } else {
+      triggerBtn.textContent = "進站";
+      triggerBtn.classList.add("running");
+    }
+  }
+
+  syncAudioButton() {
+    const btn = document.getElementById("btn-toggle-audio");
+    if (btn) btn.textContent = this.audio.muted ? "🔇 靜音" : "🔊 音效";
+  }
+
+  notifyStatus(text, isDanger = false) {
+    const elem = document.getElementById("status-bubble");
+    elem.textContent = text;
+    if (isDanger) elem.classList.add("danger");
+    else elem.classList.remove("danger");
+    elem.style.display = "block";
+  }
+
+  dismissStatus() {
+    document.getElementById("status-bubble").style.display = "none";
+  }
+
+  displayOutcomeModal(score) {
+    const modal = document.getElementById("clear-dialog");
+    const summary = document.getElementById("dialog-score-text");
+    const proceedBtn = document.getElementById("btn-dialog-next");
+
+    const stageData = STAGES[this.currentStageIdx];
+    if (stageData.isTutorial) {
+      summary.textContent = `恭喜掌握橋樑基礎！即將進入正式關卡 STAGE 1`;
+      proceedBtn.textContent = "進入第 1 關挑戰";
+    } else {
+      summary.textContent = `本關得分：${score} 分 (總分：${this.aggregateTotalScore()} / 最佳：${this.fetchHistoricalRecord()})`;
+      proceedBtn.textContent = (this.currentStageIdx >= STAGES.length - 1) ? "完成全部考驗" : `前往第 ${this.currentStageIdx + 1} 關`;
+    }
+    modal.style.display = "flex";
+  }
+
+  hideOutcomeModal() {
+    document.getElementById("clear-dialog").style.display = "none";
+  }
+
+  isBridgeContinuityValid() {
+    for (let c = 0; c < GRID_COL_COUNT - 1; c++) {
+      const link = this.members.get(linkKey(this.roadSequence[c].id, this.roadSequence[c + 1].id));
+      if (!link || link.ruptured) return false;
+    }
+    return true;
+  }
+
+  queryRoadMemberAt(colIndex) {
+    const link = this.members.get(linkKey(this.roadSequence[colIndex].id, this.roadSequence[colIndex + 1].id));
+    return (link && !link.ruptured) ? link : null;
+  }
+
+  connectNodes(id1, id2) {
+    if (id1 === id2) return;
+    const n1 = this.nodes.get(id1);
+    const n2 = this.nodes.get(id2);
+    if (!n1 || !n2) return;
+    if (n1.isFixed && n2.isFixed) return;
+
+    const span = euclideanDistance(n1, n2);
+    if (span > MAX_LINK_DISTANCE) return;
+
+    const key = linkKey(id1, id2);
+    if (this.members.has(key)) return;
+
+    const isRoadSeg = (n1.row === ROAD_ROW_INDEX && n2.row === ROAD_ROW_INDEX);
+    const beamLine = createSvgElement("line", {
+      stroke: "#64748b",
+      "stroke-width": isRoadSeg ? 7 : 5,
+      "stroke-linecap": "round"
+    });
+    beamLine.style.cursor = "pointer";
+    beamLine.dataset.linkId = key;
+    this.memberLayer.appendChild(beamLine);
+
+    this.members.set(key, {
+      key: key, n1: id1, n2: id2,
+      restLength: span, ruptured: false,
+      isRoad: isRoadSeg, axialForce: 0,
+      stressRatio: 0, element: beamLine
+    });
+
+    this.audio.playNodePlace();
+    this.refreshVisuals();
+    this.updateTutorialGuidance();
+  }
+
+  disconnectMember(key) {
+    const member = this.members.get(key);
+    if (member) {
+      member.element.remove();
+      this.members.delete(key);
+      this.audio.playMemberDelete();
+      this.refreshVisuals();
+      this.updateTutorialGuidance();
+    }
+  }
+
+  removeAllMembers() {
+    for (const m of this.members.values()) m.element.remove();
+    this.members.clear();
+    this.cancelDragPreview();
+    this.audio.playMemberDelete();
+    this.refreshVisuals();
+    this.updateTutorialGuidance();
+  }
+
+  triggerImpactShake(intensity = 14) {
+    this.shakeIntensity = Math.max(this.shakeIntensity, intensity);
+  }
+
+  resolveStressPalette(ratio) {
+    if (ratio < 0.5) return "#10b981";
+    if (ratio < 0.85) return "#f59e0b";
+    return "#f43f5e";
+  }
+
+  renderBeamsVisual(isSimulating) {
+    for (const m of this.members.values()) {
+      const nodeA = this.nodes.get(m.n1);
+      const nodeB = this.nodes.get(m.n2);
+      m.element.setAttribute("x1", nodeA.x);
+      m.element.setAttribute("y1", nodeA.y);
+      m.element.setAttribute("x2", nodeB.x);
+      m.element.setAttribute("y2", nodeB.y);
+
+      if (m.ruptured) {
+        m.element.setAttribute("class", "beam-broken-flash");
+      } else {
+        m.element.removeAttribute("class");
+        let tint = m.isRoad ? "#64748b" : "#475569";
+        if (isSimulating) tint = this.resolveStressPalette(m.stressRatio);
+        m.element.setAttribute("stroke", tint);
+        m.element.setAttribute("stroke-width", m.isRoad ? "7" : "5");
+        m.element.removeAttribute("stroke-dasharray");
+      }
+    }
+  }
+
+  renderNodesVisual() {
+    const activeNodeIds = new Set();
+    for (const m of this.members.values()) {
+      if (!m.ruptured) {
+        activeNodeIds.add(m.n1);
+        activeNodeIds.add(m.n2);
+      }
+    }
+    const dragPathSet = new Set(this.dragPathNodeIds);
+
+    for (const n of this.nodes.values()) {
+      if (n.isFixed) {
+        n.element.setAttribute("opacity", "1");
+        n.element.style.pointerEvents = (this.operationalState === "edit") ? "auto" : "none";
+        continue;
+      }
+
+      const hasActiveConnection = activeNodeIds.has(n.id);
+      if (this.operationalState === "simulate" && !hasActiveConnection) {
+        n.element.setAttribute("opacity", "0");
+        n.element.style.pointerEvents = "none";
+        continue;
+      }
+
+      n.element.setAttribute("opacity", "1");
+      n.element.style.pointerEvents = (this.operationalState === "edit") ? "auto" : "none";
+      n.element.setAttribute("cx", n.x);
+      n.element.setAttribute("cy", n.y);
+
+      const isChosen = (dragPathSet.has(n.id));
+      n.element.setAttribute("fill", isChosen ? "#38bdf8" : "#ffffff");
+      n.element.setAttribute("r", isChosen ? 7 : 5);
+    }
+  }
+
+  refreshVisuals() {
+    this.renderBeamsVisual(false);
+    this.renderNodesVisual();
+    this.syncDashboard();
+  }
+
+  createVehicleArt() {
+    const g = createSvgElement("g");
+    const cargoBed = createSvgElement("rect", { x: -24, y: -18, width: 26, height: 16, rx: 2, fill: "#0284c7" });
+    const cargoAccent = createSvgElement("rect", { x: -22, y: -16, width: 22, height: 12, rx: 1, fill: "#0369a1" });
+    const cab = createSvgElement("polygon", { points: "4,-2 4,-19 16,-19 25,-10 25,-2", fill: "#38bdf8" });
+    const windowGlass = createSvgElement("polygon", { points: "7,-16 15,-16 22,-10 7,-10", fill: "#0f172a", opacity: 0.8 });
+    const chassis = createSvgElement("rect", { x: -26, y: -2, width: 53, height: 4, rx: 1, fill: "#1e293b" });
+    const wheelR = createSvgElement("circle", { cx: -14, cy: 3, r: 5.5, fill: "#0f172a" });
+    const hubR = createSvgElement("circle", { cx: -14, cy: 3, r: 2.2, fill: "#94a3b8" });
+    const wheelF = createSvgElement("circle", { cx: 16, cy: 3, r: 5.5, fill: "#0f172a" });
+    const hubF = createSvgElement("circle", { cx: 16, cy: 3, r: 2.2, fill: "#94a3b8" });
+    const headlight = createSvgElement("circle", { cx: 25.5, cy: -5, r: 2, fill: "#fef08a" });
+    g.append(cargoBed, cargoAccent, cab, windowGlass, chassis, wheelR, hubR, wheelF, hubF, headlight);
+    return g;
+  }
+
+  launchSimulation() {
+    if (!this.isBridgeContinuityValid()) {
+      this.notifyStatus("橋面尚未完全連通兩岸", true);
+      setTimeout(() => this.updateTutorialGuidance(), 1600);
+      return;
+    }
+
+    this.operationalState = "simulate";
+    this.cancelDragPreview();
+    this.hideOutcomeModal();
+    this.dismissStatus();
+    this.snapCooldown = 0;
+    this.shakeIntensity = 0;
+
+    for (const n of this.nodes.values()) {
+      n.x = n.baseX; n.y = n.baseY;
+      n.vx = 0; n.vy = 0;
+    }
+    for (const m of this.members.values()) {
+      m.ruptured = false;
+      m.axialForce = 0;
+      m.stressRatio = 0;
+    }
+
+    this.vehicle = {
+      x: LEFT_ANCHOR_X,
+      y: ROAD_Y - 8,
+      pitchAngle: 0,
+      descentSpeed: 0,
+      isFalling: false,
+      graphic: this.createVehicleArt()
+    };
+
+    this.simulationOutcome = null;
+    this.stabilizeCounter = STABILIZE_TICKS;
+    this.syncDashboard();
+
+    this.vehicleLayer.innerHTML = "";
+    this.vehicleLayer.appendChild(this.vehicle.graphic);
+
+    this.lastFrameTime = performance.now();
+    this.timeAccumulator = 0;
+    this.audio.startEngineSound();
+    this.rafHandle = requestAnimationFrame(this.stepPhysicsLoop.bind(this));
+  }
+
+  abortSimulation() {
+    if (this.rafHandle) cancelAnimationFrame(this.rafHandle);
+    this.operationalState = "edit";
+    this.audio.stopEngineSound();
+
+    for (const n of this.nodes.values()) {
+      n.x = n.baseX; n.y = n.baseY;
+      n.vx = 0; n.vy = 0;
+    }
+    for (const m of this.members.values()) {
+      m.ruptured = false;
+      m.axialForce = 0;
+      m.stressRatio = 0;
+    }
+    this.vehicle = null;
+    this.simulationOutcome = null;
+    this.vehicleLayer.innerHTML = "";
+    this.dismissStatus();
+    this.cancelDragPreview();
+    this.shakeIntensity = 0;
+    this.stageWrapper.style.transform = "translate3d(0, 0, 0)";
+    this.refreshVisuals();
+    this.updateTutorialGuidance();
+  }
+
+  integratePhysicsTick() {
+    const subDt = FIXED_DELTA / INTEGRATION_SUB_STEPS;
+    const isStabilizing = (this.stabilizeCounter > 0);
+    const hasVehicleFallen = (this.vehicle && this.vehicle.isFalling);
+    const fluidDamping = isStabilizing ? DAMPING_STABILIZE : (hasVehicleFallen ? 0.998 : DAMPING_NORMAL);
+
+    let activeSpanIndex = -1;
+    let wheelRatio = 0;
+
+    if (this.vehicle && !this.vehicle.isFalling && !isStabilizing) {
+      for (let i = 0; i < GRID_COL_COUNT - 1; i++) {
+        const x1 = this.roadSequence[i].baseX;
+        const x2 = this.roadSequence[i + 1].baseX;
+        if (this.vehicle.x >= x1 && this.vehicle.x <= x2) {
+          activeSpanIndex = i;
+          wheelRatio = (this.vehicle.x - x1) / (x2 - x1);
+          break;
+        }
+      }
+      if (activeSpanIndex !== -1 && !this.queryRoadMemberAt(activeSpanIndex)) {
+        activeSpanIndex = -1;
+      }
+    }
+
+    const payloadWeight = LIVE_LOAD_FACTOR * STAGES[this.currentStageIdx].weight;
+    const effectiveGravity = hasVehicleFallen ? (GRAVITY_ACCEL * 2.2) : GRAVITY_ACCEL;
+
+    const activeNodeSet = new Set();
+    for (const m of this.members.values()) {
+      if (!m.ruptured) {
+        activeNodeSet.add(m.n1);
+        activeNodeSet.add(m.n2);
+      }
+    }
+
+    for (let sub = 0; sub < INTEGRATION_SUB_STEPS; sub++) {
+      for (const n of this.nodes.values()) {
+        if (!n.isFixed && activeNodeSet.has(n.id)) {
+          n.fx = 0;
+          n.fy = effectiveGravity * n.mass;
+        }
+      }
+
+      if (activeSpanIndex >= 0) {
+        const leftNode = this.roadSequence[activeSpanIndex];
+        const rightNode = this.roadSequence[activeSpanIndex + 1];
+        if (!leftNode.isFixed) leftNode.fy += payloadWeight * (1 - wheelRatio);
+        if (!rightNode.isFixed) rightNode.fy += payloadWeight * wheelRatio;
+      }
+
+      for (const m of this.members.values()) {
+        if (m.ruptured) continue;
+        const nodeA = this.nodes.get(m.n1);
+        const nodeB = this.nodes.get(m.n2);
+        const deltaX = nodeB.x - nodeA.x;
+        const deltaY = nodeB.y - nodeA.y;
+        const currentLen = Math.hypot(deltaX, deltaY) || 1e-4;
+        const dirX = deltaX / currentLen;
+        const dirY = deltaY / currentLen;
+
+        const force = MEMBER_STIFFNESS * (currentLen - m.restLength);
+        m.axialForce = force;
+
+        if (!nodeA.isFixed) {
+          nodeA.fx += force * dirX;
+          nodeA.fy += force * dirY;
+        }
+        if (!nodeB.isFixed) {
+          nodeB.fx -= force * dirX;
+          nodeB.fy -= force * dirY;
+        }
+      }
+
+      for (const n of this.nodes.values()) {
+        if (n.isFixed || !activeNodeSet.has(n.id)) continue;
+        n.vx = (n.vx + (n.fx / n.mass) * subDt) * fluidDamping;
+        n.vy = (n.vy + (n.fy / n.mass) * subDt) * fluidDamping;
+
+        const limitV = hasVehicleFallen ? 1400 : TERMINAL_VELOCITY;
+        const speed = Math.hypot(n.vx, n.vy);
+        if (speed > limitV) {
+          n.vx *= limitV / speed;
+          n.vy *= limitV / speed;
+        }
+        n.x += n.vx * subDt;
+        n.y += n.vy * subDt;
+      }
+    }
+
+    if (this.snapCooldown > 0) this.snapCooldown--;
+
+    let globalMaxStress = 0;
+    if (!isStabilizing && this.snapCooldown === 0) {
+      let worstMember = null;
+      let maxRatio = 1.0;
+
+      for (const m of this.members.values()) {
+        if (m.ruptured) continue;
+        const tensileCap = m.isRoad ? ROAD_TENSILE_LIMIT : TENSILE_LIMIT;
+        const capacity = (m.axialForce >= 0) ? tensileCap : evaluateCompressionLimit(m.restLength);
+        m.stressRatio = Math.abs(m.axialForce) / capacity;
+
+        if (m.stressRatio > globalMaxStress) globalMaxStress = m.stressRatio;
+        if (m.stressRatio > maxRatio) {
+          maxRatio = m.stressRatio;
+          worstMember = m;
+        }
+      }
+
+      if (globalMaxStress >= 0.88) this.audio.playStressCreak();
+      if (worstMember) {
+        worstMember.ruptured = true;
+        this.snapCooldown = SNAP_COOLDOWN_TICKS;
+        this.audio.playBeamSnap();
+        this.triggerImpactShake(16);
+      }
+    }
+  }
+
+  progressVehicleTrajectory() {
+    if (!this.vehicle || this.stabilizeCounter > 0 || this.simulationOutcome) return;
+
+    let colIdx = -1;
+    for (let i = 0; i < GRID_COL_COUNT - 1; i++) {
+      if (this.vehicle.x >= this.roadSequence[i].baseX && this.vehicle.x <= this.roadSequence[i + 1].baseX) {
+        colIdx = i;
+        break;
+      }
+    }
+
+    const isLeftBank = (this.vehicle.x < LEFT_ANCHOR_X);
+    const isRightBank = (this.vehicle.x >= RIGHT_ANCHOR_X);
+    const activeRoadMember = (colIdx >= 0) ? this.queryRoadMemberAt(colIdx) : null;
+
+    if (!isLeftBank && !isRightBank && !activeRoadMember) {
+      this.vehicle.isFalling = true;
+    }
+
+    if (this.vehicle.isFalling) {
+      this.vehicle.descentSpeed += 980 * FIXED_DELTA;
+      this.vehicle.y += this.vehicle.descentSpeed * FIXED_DELTA;
+      this.vehicle.x += VEHICLE_SPEED * FIXED_DELTA * 0.15;
+      this.vehicle.pitchAngle = Math.min(60, (this.vehicle.pitchAngle || 0) + 80 * FIXED_DELTA);
+
+      if (this.vehicle.y >= CANYON_FLOOR_Y - 5) {
+        this.audio.playCrashImpact();
+        this.triggerImpactShake(22);
+        return this.triggerDefeat("結構斷裂失穩，卡車墜入深淵！");
+      }
+      return;
+    }
+
+    if (isLeftBank || isRightBank) {
+      this.vehicle.y = ROAD_Y - 8;
+      this.vehicle.pitchAngle = 0;
+      this.audio.updateEngineTone(1.0);
+    } else {
+      const segLeftX = this.roadSequence[colIdx].baseX;
+      const segRightX = this.roadSequence[colIdx + 1].baseX;
+      const ratio = (this.vehicle.x - segLeftX) / (segRightX - segLeftX);
+      const leftN = this.roadSequence[colIdx];
+      const rightN = this.roadSequence[colIdx + 1];
+      const deckY = leftN.y + (rightN.y - leftN.y) * ratio;
+
+      this.vehicle.y = deckY - 8;
+      const dy = rightN.y - leftN.y;
+      const dx = Math.max(15, rightN.x - leftN.x);
+      const roadSlopeAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+      this.vehicle.pitchAngle = roadSlopeAngle;
+
+      const slopeFactor = 1.0 + (roadSlopeAngle / 30) * 0.35;
+      this.audio.updateEngineTone(slopeFactor);
+
+      if (deckY > MAX_SINK_LIMIT_Y) {
+        this.vehicle.isFalling = true;
+        this.triggerImpactShake(18);
+        return this.triggerDefeat("橋樑過度變形坍塌，卡車墜入深淵！");
+      }
+      if (Math.abs(roadSlopeAngle) > MAX_ALLOWED_PITCH) {
+        this.vehicle.isFalling = true;
+        this.triggerImpactShake(18);
+        return this.triggerDefeat("路面坡度過陡，卡車翻覆墜落！");
+      }
+    }
+
+    this.vehicle.x += VEHICLE_SPEED * FIXED_DELTA;
+    if (this.vehicle.x >= RIGHT_ANCHOR_X + 10 && !this.vehicle.isFalling) {
+      return this.triggerVictory();
+    }
+  }
+
+  refreshVehicleTransform() {
+    if (this.vehicle && this.vehicle.graphic) {
+      const pitch = this.vehicle.pitchAngle || 0;
+      this.vehicle.graphic.setAttribute("transform", `translate(${this.vehicle.x} ${this.vehicle.y}) rotate(${pitch})`);
+    }
+  }
+
+  triggerVictory() {
+    if (this.simulationOutcome) return;
+    this.simulationOutcome = "win";
+    if (this.rafHandle) cancelAnimationFrame(this.rafHandle);
+    this.audio.stopEngineSound();
+    this.audio.playVictoryHorn();
+
+    const beamCount = this.members.size;
+    const earnedScore = this.calculateStageScore(beamCount, this.currentStageIdx);
+    if (!STAGES[this.currentStageIdx].isTutorial) {
+      document.getElementById("ui-score").textContent = earnedScore;
+      this.commitBestScore(this.currentStageIdx, earnedScore);
+    }
+    this.syncDashboard();
+    this.displayOutcomeModal(earnedScore);
+  }
+
+  triggerDefeat(message) {
+    if (this.simulationOutcome) return;
+    this.simulationOutcome = "lose";
+    this.audio.stopEngineSound();
+    this.renderBeamsVisual(true);
+    this.refreshVehicleTransform();
+    this.notifyStatus(message, true);
+  }
+
+  stepPhysicsLoop(currentTimestamp) {
+    if (this.simulationOutcome === "win") return;
+    if (!this.lastFrameTime) this.lastFrameTime = currentTimestamp;
+
+    const elapsedSeconds = Math.min(0.1, (currentTimestamp - this.lastFrameTime) / 1000);
+    this.lastFrameTime = currentTimestamp;
+    this.timeAccumulator += elapsedSeconds;
+
+    let subTicks = 0;
+    while (this.timeAccumulator >= FIXED_DELTA && subTicks < MAX_PHYSICS_SUB_TICKS) {
+      this.integratePhysicsTick();
+      if (this.stabilizeCounter > 0) this.stabilizeCounter--;
+      this.progressVehicleTrajectory();
+      this.timeAccumulator -= FIXED_DELTA;
+      subTicks++;
+      if (this.simulationOutcome === "win") break;
+    }
+
+    if (this.shakeIntensity > 0.1) {
+      const offX = (Math.random() * 2 - 1) * this.shakeIntensity;
+      const offY = (Math.random() * 2 - 1) * this.shakeIntensity;
+      this.stageWrapper.style.transform = `translate3d(${offX.toFixed(1)}px, ${offY.toFixed(1)}px, 0)`;
+      this.shakeIntensity *= 0.88;
+    } else if (this.shakeIntensity !== 0) {
+      this.shakeIntensity = 0;
+      this.stageWrapper.style.transform = "translate3d(0, 0, 0)";
+    }
+
+    this.renderBeamsVisual(true);
+    this.renderNodesVisual();
+    this.refreshVehicleTransform();
+
+    if (!this.simulationOutcome || this.vehicle?.isFalling) {
+      this.rafHandle = requestAnimationFrame(this.stepPhysicsLoop.bind(this));
+    }
+  }
+
+  getSvgCoordinates(e) {
+    const pt = this.svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    return pt.matrixTransform(this.svg.getScreenCTM().inverse());
+  }
+
+  cancelDragPreview() {
+    this.dragPathNodeIds = [];
+    this.previewLayer.innerHTML = "";
+    this.renderNodesVisual();
+  }
+
+  bindUserInteractions() {
+    this.svg.addEventListener("contextmenu", e => e.preventDefault());
+
+    const fabBtn = document.getElementById("fab-tool-mode");
+    fabBtn.addEventListener("pointerdown", e => {
+      e.stopPropagation();
+      if (this.activeMobileTool === "build") {
+        this.activeMobileTool = "erase";
+        fabBtn.textContent = "🧹";
+        fabBtn.classList.add("erase-mode");
+        this.notifyStatus("已切換為【拆除模式】：滑動觸控即可清除桿件", false);
+      } else {
+        this.activeMobileTool = "build";
+        fabBtn.textContent = "✏️";
+        fabBtn.classList.remove("erase-mode");
+        this.dismissStatus();
+      }
+      this.cancelDragPreview();
+    });
+
+    this.svg.addEventListener("pointerdown", e => {
+      if (this.operationalState !== "edit") return;
+
+      const currentSvgPt = this.getSvgCoordinates(e);
+      const isRightClick = (e.button === 2);
+      const isEraseModeActive = (this.activeMobileTool === "erase" || isRightClick);
+
+      const target = e.target;
+      const targetLinkId = target?.dataset?.linkId;
+      const targetNodeId = target?.dataset?.nodeId;
+
+      if (isEraseModeActive) {
+        this.isErasing = true;
+        this.lastErasePt = currentSvgPt;
+        if (targetLinkId) this.disconnectMember(targetLinkId);
+        return;
+      }
+
+      if (e.button === 0) {
+        if (targetLinkId) return;
+        if (targetNodeId) {
+          this.dragPathNodeIds = [targetNodeId];
+          this.renderNodesVisual();
+          return;
+        }
+        this.cancelDragPreview();
+      }
+    });
+
+    this.svg.addEventListener("pointermove", e => {
+      if (this.operationalState !== "edit") return;
+      const currentSvgPt = this.getSvgCoordinates(e);
+
+      if (this.isErasing) {
+        if (this.lastErasePt) {
+          const p1 = this.lastErasePt;
+          const p2 = currentSvgPt;
+          const toDelete = [];
+
+          for (const m of this.members.values()) {
+            const nodeA = this.nodes.get(m.n1);
+            const nodeB = this.nodes.get(m.n2);
+            if (nodeA && nodeB && checkSegmentsIntersect(p1, p2, nodeA, nodeB)) {
+              toDelete.push(m.key);
+            }
+          }
+          for (const key of toDelete) this.disconnectMember(key);
+        }
+
+        const hoveredEl = document.elementFromPoint(e.clientX, e.clientY);
+        if (hoveredEl?.dataset?.linkId) {
+          this.disconnectMember(hoveredEl.dataset.linkId);
+        }
+        this.lastErasePt = currentSvgPt;
+        return;
+      }
+
+      if (this.dragPathNodeIds.length === 0) return;
+
+      const mousePt = currentSvgPt;
+      let lastNode = this.nodes.get(this.dragPathNodeIds[this.dragPathNodeIds.length - 1]);
+
+      let closestNode = null;
+      let minDis = 32;
+
+      for (const n of this.nodes.values()) {
+        const d = Math.hypot(n.x - mousePt.x, n.y - mousePt.y);
+        if (d < minDis) {
+          closestNode = n;
+          break;
+        }
+      }
+
+      if (closestNode) {
+        const pathLen = this.dragPathNodeIds.length;
+        if (pathLen >= 2 && closestNode.id === this.dragPathNodeIds[pathLen - 2]) {
+          this.dragPathNodeIds.pop();
+          lastNode = this.nodes.get(this.dragPathNodeIds[this.dragPathNodeIds.length - 1]);
+        } else if (closestNode.id !== lastNode.id) {
+          const span = euclideanDistance(lastNode, closestNode);
+          if (span <= MAX_LINK_DISTANCE && !(lastNode.isFixed && closestNode.isFixed)) {
+            this.dragPathNodeIds.push(closestNode.id);
+            lastNode = closestNode;
+          }
+        }
+      }
+
+      this.previewLayer.innerHTML = "";
+      for (let i = 0; i < this.dragPathNodeIds.length - 1; i++) {
+        const nA = this.nodes.get(this.dragPathNodeIds[i]);
+        const nB = this.nodes.get(this.dragPathNodeIds[i + 1]);
+        const fixedSeg = createSvgElement("line", {
+          x1: nA.x, y1: nA.y, x2: nB.x, y2: nB.y,
+          stroke: "#38bdf8", "stroke-width": 4, "stroke-linecap": "round",
+          "stroke-dasharray": "6 6", opacity: "0.9"
+        });
+        fixedSeg.style.pointerEvents = "none";
+        this.previewLayer.appendChild(fixedSeg);
+      }
+
+      const activeSpan = Math.hypot(mousePt.x - lastNode.x, mousePt.y - lastNode.y);
+      const isTailValid = (activeSpan <= MAX_LINK_DISTANCE);
+      const activeSeg = createSvgElement("line", {
+        x1: lastNode.x, y1: lastNode.y, x2: mousePt.x, y2: mousePt.y,
+        stroke: isTailValid ? "#38bdf8" : "#f43f5e",
+        "stroke-width": 4, "stroke-linecap": "round",
+        "stroke-dasharray": "6 6", opacity: "0.9"
+      });
+      activeSeg.style.pointerEvents = "none";
+      this.previewLayer.appendChild(activeSeg);
+
+      this.renderNodesVisual();
+    });
+
+    window.addEventListener("pointerup", () => {
+      if (this.operationalState !== "edit") return;
+      this.isErasing = false;
+      this.lastErasePt = null;
+
+      if (this.dragPathNodeIds.length > 1) {
+        for (let i = 0; i < this.dragPathNodeIds.length - 1; i++) {
+          this.connectNodes(this.dragPathNodeIds[i], this.dragPathNodeIds[i + 1]);
+        }
+      }
+      this.cancelDragPreview();
+    });
+
+    document.getElementById("btn-toggle-audio").addEventListener("click", () => {
+      this.audio.toggleMute();
+      this.syncAudioButton();
+    });
+
+    document.getElementById("btn-test").addEventListener("click", () => {
+      if (this.operationalState === "edit") this.launchSimulation();
+      else this.abortSimulation();
+    });
+
+    document.getElementById("btn-clear").addEventListener("click", () => {
+      this.abortSimulation();
+      this.removeAllMembers();
+    });
+
+    document.getElementById("btn-reset-score").addEventListener("click", () => {
+      if (window.confirm("確定重設所有進度與分數紀錄嗎？")) this.wipeAllScores();
+    });
+
+    document.getElementById("btn-dialog-retry").addEventListener("click", () => {
+      this.hideOutcomeModal();
+      this.abortSimulation();
+    });
+
+    document.getElementById("btn-dialog-next").addEventListener("click", () => {
+      this.hideOutcomeModal();
+      if (this.currentStageIdx < STAGES.length - 1) {
+        this.switchStage(this.currentStageIdx + 1);
+      } else {
+        this.renderStageSelector();
+        document.getElementById("modal-levels").style.display = "flex";
+      }
+    });
+
+    document.getElementById("btn-welcome-tutorial").addEventListener("click", () => {
+      this.hideWelcomeModal();
+      this.switchStage(0);
+    });
+
+    document.getElementById("btn-welcome-skip").addEventListener("click", () => {
+      this.hideWelcomeModal();
+      this.switchStage(1);
+    });
+
+    const levelModal = document.getElementById("modal-levels");
+    document.getElementById("btn-open-levels").addEventListener("click", () => {
+      this.renderStageSelector();
+      levelModal.style.display = "flex";
+    });
+    document.getElementById("btn-close-levels").addEventListener("click", () => {
+      levelModal.style.display = "none";
+    });
+  }
+
+  renderStageSelector() {
+    const listContainer = document.getElementById("grid-container");
+    listContainer.innerHTML = "";
+    STAGES.forEach((item, idx) => {
+      const box = document.createElement("div");
+      box.className = `level-card ${this.currentStageIdx === idx ? 'active' : ''}`;
+      const bestText = item.isTutorial ? "-" : this.fetchStoredBest(idx);
+      box.innerHTML = `
+        <div class="num">${item.isTutorial ? "STAGE 0" : `STAGE ${item.stage}`}</div>
+        <div class="sub">LOAD: ${item.weight.toFixed(1)} t</div>
+        <div class="best">BEST: ${bestText}</div>
+      `;
+      box.onclick = () => {
+        this.switchStage(idx);
+        document.getElementById("modal-levels").style.display = "none";
+      };
+      listContainer.appendChild(box);
+    });
+  }
+}
+
+window.onload = () => {
+  const canvasSvg = document.getElementById("game-svg");
+  new CanyonBridgeApp(canvasSvg);
+};
+</script>
+</body>
+</html>

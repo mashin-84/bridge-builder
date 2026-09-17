@@ -55,11 +55,11 @@
     font-size: 16px;
     line-height: 1.6;
     max-width: 600px;
-    margin: 0 auto 40px;
+    margin: 0 auto 36px;
   }
   .mode-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 20px;
     margin-bottom: 36px;
   }
@@ -69,27 +69,10 @@
     border-radius: 18px;
     padding: 28px 24px;
     text-align: left;
-    text-decoration: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     position: relative;
-    overflow: hidden;
-  }
-  .mode-card.active {
-    cursor: pointer;
-  }
-  .mode-card.active:hover {
-    background: rgba(56, 189, 248, 0.08);
-    border-color: rgba(56, 189, 248, 0.5);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
-  }
-  .mode-card.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    border-style: dashed;
   }
   .mode-title {
     font-size: 20px;
@@ -106,16 +89,46 @@
     line-height: 1.5;
     margin-bottom: 24px;
   }
-  .btn-enter {
-    align-self: flex-start;
-    padding: 8px 18px;
+  .btn-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn-launch {
+    flex: 1;
+    min-width: 130px;
+    text-align: center;
+    padding: 10px 14px;
     border-radius: 10px;
     font-size: 13.5px;
     font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+  }
+  .btn-desktop {
     background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     color: #ffffff;
     border: 1px solid rgba(56, 189, 248, 0.4);
-    box-shadow: 0 0 14px rgba(2, 132, 199, 0.35);
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+  }
+  .btn-desktop:hover {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    transform: translateY(-2px);
+  }
+  .btn-mobile {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+  }
+  .btn-mobile:hover {
+    background: rgba(56, 189, 248, 0.2);
+    transform: translateY(-2px);
+  }
+  .mode-card.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-style: dashed;
   }
   .tag-soon {
     font-size: 11px;
@@ -141,33 +154,36 @@
   <div class="badge">STEM 物理力學互動模擬</div>
   <h1>峽谷橋樑工程師</h1>
   <p class="desc">
-    利用桁架結構與材料力學特性，在預算內設計能乘載重型卡車通行的便橋。點選下方模式展開挑戰：
+    利用桁架結構與材料力學特性，在嚴格預算內設計能乘載重型卡車通行的便橋。請依您的裝置點選模式展開挑戰：
   </p>
 
   <div class="mode-grid">
-    <!-- 經典模式入口 -->
-    <a href="classic.html" class="mode-card active">
+    <!-- 經典模式入口（方案 B：卡片內含兩顆獨立按鈕） -->
+    <div class="mode-card">
       <div>
         <div class="mode-title">
           <span>經典挑戰模式</span>
-          <span style="color: #38bdf8;">➔</span>
+          <span style="color: #38bdf8;">★</span>
         </div>
         <div class="mode-desc">
           包含基礎教學引導關卡與10道漸進式重力考驗。考驗三角形桁架配置與最佳預算效益。
         </div>
       </div>
-      <div class="btn-enter">開始挑戰</div>
-    </a>
+      <div class="btn-group">
+        <a href="classic.html" class="btn-launch btn-desktop">💻 電腦桌機版</a>
+        <a href="mobile.html" class="btn-launch btn-mobile">📱 手機觸控版</a>
+      </div>
+    </div>
 
     <!-- 即將推出模式 -->
     <div class="mode-card disabled">
       <div>
         <div class="mode-title">
-          <span>可能會更新的模式</span>
+          <span>自訂沙盒模式</span>
           <span class="tag-soon">COMING SOON</span>
         </div>
         <div class="mode-desc">
-          無預算與節點限制，自由設計超大跨距結構，進行極限載重應力破壞實驗(可能會更新)。
+          無預算與節點限制，自由設計超大跨距結構，進行極限載重應力破壞實驗。
         </div>
       </div>
       <div style="font-size: 12px; font-weight: 600; color: #64748b;">敬請期待</div>
@@ -176,7 +192,7 @@
 
   <div class="footer-note">
     本模擬系統為非營利教育推廣用途，靈感啟發自經典桁架工程力學與線上物理模擬遊戲。<br>
-    建議使用電腦搭配滑鼠操作以取得最佳體驗。
+    由本科技中心自主開發，若有授課需求歡迎自由運用於教學。
   </div>
 </div>
 
