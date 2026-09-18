@@ -1880,6 +1880,9 @@ class CanyonBridgeApp {
 }
 
 window.onload = () => {
+  // 背景發送造訪統計（靜默失敗不卡遊戲）
+  fetch("https://api.counterapi.dev/v1/slshmaker_bridge/classic_visit/up").catch(() => {});
+  
   const canvasSvg = document.getElementById("game-svg");
   new CanyonBridgeApp(canvasSvg);
 };
