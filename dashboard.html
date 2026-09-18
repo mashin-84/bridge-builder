@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bridge Builder - 數據監控儀表板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(135deg, #090d16 0%, #111827 50%, #1a2234 100%);
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Microsoft JhengHei", sans-serif;
+    min-height: 100vh;
+    padding: 32px 16px;
+    display: flex;
+    justify-content: center;
+  }
+  .dashboard {
+    width: 100%;
+    max-width: 900px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .title-area h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #ffffff;
+  }
+  .title-area p {
+    font-size: 13.5px;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+  .refresh-btn {
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #38bdf8;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .refresh-btn:hover {
+    background: rgba(56, 189, 248, 0.22);
+  }
+
+  /* 核心數值卡片列 */
+  .grid-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .metric-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 20px;
+    backdrop-filter: blur(16px);
+  }
+  .metric-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 8px;
+  }
+  .metric-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+  }
+  .val-sky { color: #38bdf8; }
+  .val-amber { color: #facc15; }
+  .val-emerald { color: #34d399; }
+
+  /* 平台對照分析區 */
+  .analytics-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 24px;
+    backdrop-filter: blur(16px);
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #e2e8f0;
+  }
+  .compare-row {
+    margin-bottom: 20px;
+  }
+  .compare-row:last-child {
+    margin-bottom: 0;
+  }
+  .row-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .bar-container {
+    height: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+  }
+  .bar-desktop {
+    background: #0284c7;
+    height: 100%;
+    transition: width 0.5s ease;
+  }
+  .bar-mobile {
+    background: #38bdf8;
+    height: 100%;
+    transition: width 0.5s ease;
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+  .dot-desktop { background: #0284c7; }
+  .dot-mobile { background: #38bdf8; }
+
+  .status-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+  <div class="header">
+    <div class="title-area">
+      <h1>峽谷橋樑工程師 - 營運監控數據</h1>
+      <p>即時追蹤訪客流量與模擬啟動互動成效</p>
+    </div>
+    <button class="refresh-btn" id="btn-reload">手動重新整理</button>
+  </div>
+
+  <!-- 數據卡片 -->
+  <div class="grid-metrics">
+    <div class="metric-card">
+      <div class="metric-label">總造訪人次 (Pageviews)</div>
+      <div class="metric-value val-sky" id="metric-total-visits">--</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">總踩油門出發次數 (Launches)</div>
+      <div class="metric-value val-amber" id="metric-total-launches">--</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">人均出發模擬次數</div>
+      <div class="metric-value val-emerald" id="metric-launch-rate">--</div>
+    </div>
+  </div>
+
+  <!-- 平台分布佔比 -->
+  <div class="analytics-card">
+    <div class="card-title">平台流量分佈（電腦桌機 vs 行動裝置）</div>
+
+    <div class="compare-row">
+      <div class="row-label">
+        <span>造訪人次分佈</span>
+        <span id="label-visit-ratio">--</span>
+      </div>
+      <div class="bar-container">
+        <div class="bar-desktop" id="bar-visit-desktop" style="width: 50%;"></div>
+        <div class="bar-mobile" id="bar-visit-mobile" style="width: 50%;"></div>
+      </div>
+    </div>
+
+    <div class="compare-row">
+      <div class="row-label">
+        <span>出發次數分佈</span>
+        <span id="label-launch-ratio">--</span>
+      </div>
+      <div class="bar-container">
+        <div class="bar-desktop" id="bar-launch-desktop" style="width: 50%;"></div>
+        <div class="bar-mobile" id="bar-launch-mobile" style="width: 50%;"></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="dot dot-desktop"></span> 電腦桌機版</div>
+      <div class="legend-item"><span class="dot dot-mobile"></span> 手機觸控版</div>
+    </div>
+  </div>
+
+  <div class="status-footer">
+    <span id="last-updated">最後更新：讀取中...</span>
+    <span>每 30 秒自動更新數據</span>
+  </div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec";
+
+async function fetchAnalytics() {
+  const btn = document.getElementById("btn-reload");
+  btn.textContent = "讀取中...";
+  btn.style.opacity = "0.6";
+
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+
+    const cVisit = data.classic_visit || 0;
+    const cLaunch = data.classic_launch || 0;
+    const mVisit = data.mobile_visit || 0;
+    const mLaunch = data.mobile_launch || 0;
+
+    const totalVisit = cVisit + mVisit;
+    const totalLaunch = cLaunch + mLaunch;
+    const launchRate = totalVisit > 0 ? (totalLaunch / totalVisit).toFixed(1) : "0.0";
+
+    // 更新指標卡片
+    document.getElementById("metric-total-visits").textContent = totalVisit.toLocaleString();
+    document.getElementById("metric-total-launches").textContent = totalLaunch.toLocaleString();
+    document.getElementById("metric-launch-rate").textContent = `${launchRate} 次/人`;
+
+    // 計算並更新造訪比例條
+    const vDeskPct = totalVisit > 0 ? (cVisit / totalVisit * 100) : 50;
+    const vMobPct = totalVisit > 0 ? (mVisit / totalVisit * 100) : 50;
+    document.getElementById("bar-visit-desktop").style.width = `${vDeskPct}%`;
+    document.getElementById("bar-visit-mobile").style.width = `${vMobPct}%`;
+    document.getElementById("label-visit-ratio").textContent = `桌機 ${cVisit} (${vDeskPct.toFixed(0)}%) / 手機 ${mVisit} (${vMobPct.toFixed(0)}%)`;
+
+    // 計算並更新出發比例條
+    const lDeskPct = totalLaunch > 0 ? (cLaunch / totalLaunch * 100) : 50;
+    const lMobPct = totalLaunch > 0 ? (mLaunch / totalLaunch * 100) : 50;
+    document.getElementById("bar-launch-desktop").style.width = `${lDeskPct}%`;
+    document.getElementById("bar-launch-mobile").style.width = `${lMobPct}%`;
+    document.getElementById("label-launch-ratio").textContent = `桌機 ${cLaunch} (${lDeskPct.toFixed(0)}%) / 手機 ${mLaunch} (${lMobPct.toFixed(0)}%)`;
+
+    document.getElementById("last-updated").textContent = `最後更新：${new Date().toLocaleTimeString("zh-TW")}`;
+  } catch (err) {
+    document.getElementById("last-updated").textContent = "連線取得資料失敗，請稍後重試";
+  } finally {
+    btn.textContent = "手動重新整理";
+    btn.style.opacity = "1";
+  }
+}
+
+document.getElementById("btn-reload").addEventListener("click", fetchAnalytics);
+
+// 頁面載入立即抓取一次，並每30秒自動輪詢
+fetchAnalytics();
+setInterval(fetchAnalytics, 30000);
+</script>
+</body>
+</html>
