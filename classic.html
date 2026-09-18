@@ -1264,7 +1264,7 @@ class CanyonBridgeApp {
 
   launchSimulation() {
    // 每次點擊踩油門出發並進入模擬時自動累加一次
-    fetch("https://api.counterapi.dev/v2/slshmaker_bridge/classic_launch/up").catch(() => {});
+   fetch("https://api.counterapi.dev/v2/slshmaker_bridge/classic_launch/up").catch(() => {});
    
     if (!this.isBridgeContinuityValid()) {
       this.notifyStatus("橋面尚未完全連通兩岸", true);
@@ -1884,7 +1884,7 @@ class CanyonBridgeApp {
 
 window.onload = () => {
   // 背景發送造訪統計（靜默失敗不卡遊戲）
-  fetch("https://api.counterapi.dev/v2/slshmaker_bridge/classic_visit/up").catch(() => {});
+fetch("https://api.counterapi.dev/v2/slshmaker_bridge/classic_visit/up").catch(() => {});
   
   const canvasSvg = document.getElementById("game-svg");
   new CanyonBridgeApp(canvasSvg);
