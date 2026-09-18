@@ -1142,8 +1142,7 @@ class CanyonBridgeApp {
 
   launchSimulation() {
    // 每次手機版點擊出發時自動累加一次
-    fetch("https://api.counterapi.dev/v2/slshmaker_bridge/mobile_launch/up").catch(() => {});
-   
+fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=mobile_launch", { mode: "no-cors" }).catch(() => {});
     if (!this.isBridgeContinuityValid()) {
       this.notifyStatus("橋面尚未完全連通兩岸", true);
       setTimeout(() => this.updateTutorialGuidance(), 1600);
@@ -1746,8 +1745,7 @@ window.addEventListener("orientationchange", updateAppViewport);
 
 window.onload = () => {
   // 背景發送手機版造訪統計
-  fetch("https://api.counterapi.dev/v2/slshmaker_bridge/mobile_visit/up").catch(() => {});
-
+fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=mobile_visit", { mode: "no-cors" }).catch(() => {});
   updateAppViewport();
   const canvasSvg = document.getElementById("game-svg");
   new CanyonBridgeApp(canvasSvg);
