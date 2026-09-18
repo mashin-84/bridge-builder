@@ -40,7 +40,6 @@
     transform-origin: center center;
   }
 
-  /* 直立螢幕時強制逆時針旋轉 90 度並透過動態邊界自適應貼合 */
   @media (orientation: portrait) {
     #app-container {
       width: 100dvh !important;
@@ -53,7 +52,6 @@
     }
   }
 
-  /* 方案 A：極簡單列頂部 HUD 資訊列 */
   .top-hud {
     width: 100%;
     max-width: 1240px;
@@ -156,25 +154,26 @@
     position: absolute;
     right: 14px;
     bottom: 14px;
-    width: 46px;
-    height: 46px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 22px;
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(15, 23, 42, 0.92);
     backdrop-filter: blur(12px);
     border: 2px solid #38bdf8;
     box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
     cursor: pointer;
     z-index: 20;
+    touch-action: manipulation;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
   #fab-tool-mode.erase-mode {
     border-color: #f43f5e;
     box-shadow: 0 0 16px rgba(244, 63, 94, 0.55);
-    background: rgba(40, 16, 24, 0.92);
+    background: rgba(40, 16, 24, 0.94);
   }
   #fab-tool-mode:active {
     transform: scale(0.92);
@@ -303,7 +302,6 @@
 <body>
 
 <div id="app-container">
-  <!-- 方案 A：極簡單列頂部狀態與操作控制 -->
   <div class="top-hud">
     <div class="hud-stats-group">
       <span>關卡: <span class="val-sky" id="ui-level-num">1/10</span></span>
@@ -327,11 +325,9 @@
   </div>
 
   <div id="stage-wrapper">
-    <!-- ViewBox 調整為 90 70 720 370：聚焦橋樑跨距核心，減少山壁留白，節點放大約 35% -->
     <svg id="game-svg" viewBox="90 70 720 370" preserveAspectRatio="xMidYMid meet"></svg>
     <div id="status-bubble"></div>
 
-    <!-- 懸浮模式切換按鈕 -->
     <div id="fab-tool-mode" title="切換 建造/拆除">✏️</div>
 
     <div id="modal-welcome">
@@ -649,7 +645,7 @@ class CanyonBridgeApp {
 
     this.currentStageIdx = 1;
     this.operationalState = "edit";
-    this.activeMobileTool = "build";
+    this.activeMobileTool = "build"; // "build" 或 "erase"
 
     this.isErasing = false;
     this.lastErasePt = null;
@@ -1489,12 +1485,31 @@ class CanyonBridgeApp {
     this.renderNodesVisual();
   }
 
+  // 輔助函式：幾何最近節點檢測
+  findNearestNode(pt, maxDist = 40) {
+    let nearest = null;
+    let minD = maxDist;
+    for (const n of this.nodes.values()) {
+      const d = Math.hypot(n.x - pt.x, n.y - pt.y);
+      if (d < minD) {
+        minD = d;
+        nearest = n;
+      }
+    }
+    return nearest;
+  }
+
   bindUserInteractions() {
     this.svg.addEventListener("contextmenu", e => e.preventDefault());
 
+    // 切換按鈕改用 click 事件，徹底避免 pointerdown 殘留鎖定問題
     const fabBtn = document.getElementById("fab-tool-mode");
-    fabBtn.addEventListener("pointerdown", e => {
+    fabBtn.addEventListener("click", e => {
       e.stopPropagation();
+      this.isErasing = false;
+      this.lastErasePt = null;
+      this.cancelDragPreview();
+
       if (this.activeMobileTool === "build") {
         this.activeMobileTool = "erase";
         fabBtn.textContent = "🧹";
@@ -1506,7 +1521,6 @@ class CanyonBridgeApp {
         fabBtn.classList.remove("erase-mode");
         this.dismissStatus();
       }
-      this.cancelDragPreview();
     });
 
     this.svg.addEventListener("pointerdown", e => {
@@ -1518,7 +1532,6 @@ class CanyonBridgeApp {
 
       const target = e.target;
       const targetLinkId = target?.dataset?.linkId;
-      const targetNodeId = target?.dataset?.nodeId;
 
       if (isEraseModeActive) {
         this.isErasing = true;
@@ -1529,11 +1542,15 @@ class CanyonBridgeApp {
 
       if (e.button === 0) {
         if (targetLinkId) return;
-        if (targetNodeId) {
-          this.dragPathNodeIds = [targetNodeId];
+
+        // 全幾何磁吸判定：手指落點半徑 40px 內有節點即自動吸附啟動拉線
+        const nearest = this.findNearestNode(currentSvgPt, 40);
+        if (nearest) {
+          this.dragPathNodeIds = [nearest.id];
           this.renderNodesVisual();
           return;
         }
+
         this.cancelDragPreview();
       }
     });
@@ -1571,16 +1588,8 @@ class CanyonBridgeApp {
       const mousePt = currentSvgPt;
       let lastNode = this.nodes.get(this.dragPathNodeIds[this.dragPathNodeIds.length - 1]);
 
-      let closestNode = null;
-      let minDis = 36; // 配合聚焦放大，放寬觸控磁吸判定範圍
-
-      for (const n of this.nodes.values()) {
-        const d = Math.hypot(n.x - mousePt.x, n.y - mousePt.y);
-        if (d < minDis) {
-          closestNode = n;
-          break;
-        }
-      }
+      // 動態滑動磁吸擴展至 38px
+      const closestNode = this.findNearestNode(mousePt, 38);
 
       if (closestNode) {
         const pathLen = this.dragPathNodeIds.length;
@@ -1711,7 +1720,6 @@ class CanyonBridgeApp {
   }
 }
 
-// 監聽並自動修正行動端視窗動態網址列位移
 function updateAppViewport() {
   const isPortrait = window.innerHeight > window.innerWidth;
   const container = document.getElementById("app-container");
