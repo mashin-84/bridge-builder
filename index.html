@@ -145,6 +145,30 @@
     line-height: 1.6;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .btn-dashboard {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .btn-dashboard:hover {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.3);
+    transform: translateY(-1px);
   }
 </style>
 </head>
@@ -154,11 +178,10 @@
   <div class="badge">STEM 物理力學互動模擬</div>
   <h1>峽谷橋樑工程師</h1>
   <p class="desc">
-    利用桁架結構與材料力學特性，在預算內設計能乘載重型卡車通行的橋樑。點選下方模式展開挑戰：
+    利用桁架結構與材料力學特性，在預算內設計能乘載重型卡車通行的橋樑。請依您的裝置點選模式展開挑戰：
   </p>
 
   <div class="mode-grid">
-    <!-- 經典模式入口（方案 B：卡片內含兩顆獨立按鈕） -->
     <div class="mode-card">
       <div>
         <div class="mode-title">
@@ -175,7 +198,6 @@
       </div>
     </div>
 
-    <!-- 即將推出模式 -->
     <div class="mode-card disabled">
       <div>
         <div class="mode-title">
@@ -183,7 +205,7 @@
           <span class="tag-soon">COMING SOON</span>
         </div>
         <div class="mode-desc">
-          無預算與節點限制，自由設計超大跨距結構，進行極限載重應力破壞實驗(可能會更新啦..也可能就這樣了)。
+          無預算與節點限制，自由設計超大跨距結構，進行極限載重應力破壞實驗(也可能不會更新...)。
         </div>
       </div>
       <div style="font-size: 12px; font-weight: 600; color: #64748b;">敬請期待</div>
@@ -191,8 +213,15 @@
   </div>
 
   <div class="footer-note">
-    本模擬系統為非營利教育推廣用途，靈感啟發自經典桁架工程力學與線上物理模擬遊戲。<br>
-    由本科技中心自主開發，若有授課需求歡迎自由運用於教學。
+    <div>
+      本模擬系統為非營利教育推廣用途，靈感啟發自經典桁架工程力學與線上物理模擬遊戲。<br>
+      由本科技中心針對教學及遊玩重新設計優化開發，若有授課需求歡迎自由運用於教學。
+    </div>
+    <!-- 數據儀表板入口圖示按鈕 -->
+    <a href="dashboard.html" class="btn-dashboard">
+      <span>📊</span>
+      <span>即時數據</span>
+    </a>
   </div>
 </div>
 
