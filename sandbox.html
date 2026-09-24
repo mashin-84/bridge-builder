@@ -520,7 +520,7 @@
 
 <div class="tip-footer">
   <span>操作提示：【滑鼠左鍵】拖曳連續造橋；【滑鼠右鍵】滑過快速拆除；畫過已有桿件可【直接覆蓋換材質】。</span>
-  <span>右側懸浮泡泡：按【1】切換灰色柏油路面（每根 $200），按【2】切換褐色桁架骨架（每根 $100）。</span>
+  <span>造價說明：灰色橋面材每根 $200，褐色桁架骨架每根 $100，水中基柱每座 $500。</span>
 </div>
 
 <!-- 模式說明與特徵展示彈窗 -->
@@ -534,28 +534,29 @@
       <div class="guide-section">
         <h4>🎯 模式定位與核心差異（相較經典模式）</h4>
         <ul>
-          <li><strong>無預算與構件上限限制</strong>：捨棄關卡模式的固定預算束縛，您可以隨意揮灑靈感搭建超大型複雜桁架或懸索橋[cite: 1, 2]。</li>
+          <li><strong>無預算與構件上限限制</strong>：捨棄關卡模式的固定預算束縛，您可以隨意揮灑靈感搭建超大型複雜桁架或懸索橋。</li>
           <li><strong>參數自由定義世界</strong>：可自由設定垂直 3~7 層、水平 5~15 柱跨距、發車與抵達高程，以及高達 25.0t 的重載卡車。</li>
-          <li><strong>水中基柱自由開闢</strong>：直接【點擊最底層任一中間節點】，即可升起固定石柱基底作為中繼支撐[cite: 1, 2]。</li>
+          <li><strong>水中基柱自由開闢</strong>：直接【點擊最底層任一中間節點】，即可升起固定石柱基底作為中繼支撐。</li>
         </ul>
       </div>
 
       <div class="guide-section">
-        <h4>🧱 雙材料系統與動態造價</h4>
+        <h4>🧱 材料系統、基柱與動態造價</h4>
         <ul>
           <li><strong>🚗 橋面材 (Road) ｜ 單價 $200</strong>：柏油灰色粗線，為<strong>卡車專屬行駛動線</strong>。幾何限制僅允許水平與 45° 斜坡（排除垂直攀爬）。</li>
           <li><strong>🏗️ 支撐材 (Truss) ｜ 單價 $100</strong>：褐色鋼構細線，為內部桁架骨架。支援水平、垂直與 45° 任何方向連線，不干擾車輛行駛。</li>
+          <li><strong>🏛️ 水中基柱 (Pillar) ｜ 每座 $500</strong>：點擊最底層中間節點可升起堅固的水中固定錨點，每座建造成本為 $500。</li>
           <li><strong>直接覆蓋機制</strong>：手持當前材料直接劃過已有線段，可即時變更材質，無需先刪除。</li>
-          <li><strong>動態成本顯示</strong>：頂部 COST 看板即時結算總花費，協助評估結構經濟效益。</li>
+          <li><strong>動態成本顯示</strong>：頂部 COST 看板即時結算總花費（含橋面、桁架與基柱），協助評估結構經濟效益。</li>
         </ul>
       </div>
 
       <div class="guide-section">
         <h4>🔬 真實物理模擬引擎特色</h4>
         <ul>
-          <li><strong>Verlet 數值積分與歐拉挫屈</strong>：精準模擬桿件受壓挫屈折斷、受拉斷裂與彈性蓄能[cite: 1, 2, 5]。</li>
+          <li><strong>Verlet 數值積分與歐拉挫屈</strong>：精準模擬桿件受壓挫屈折斷、受拉斷裂與彈性蓄能。</li>
           <li><strong>動態相對下陷極限</strong>：採用相較於未受力初始高度的相對變形判定，深淵低層發車也能平穩通過。</li>
-          <li><strong>慣性與斜坡力學</strong>：卡車依據真實重力坡度進行加速、剎車阻力與極限翻覆模擬；支援跳台飛車特技[cite: 1, 2]。</li>
+          <li><strong>慣性與斜坡力學</strong>：卡車依據真實重力坡度進行加速、剎車阻力與極限翻覆模擬；支援跳台飛車特技。</li>
         </ul>
       </div>
 
@@ -563,7 +564,7 @@
         <h4>🎮 快捷鍵指南</h4>
         <ul>
           <li><strong>數字鍵 1 / 2</strong>：即時切換【橋面材】與【支撐材】。</li>
-          <li><strong>滑鼠左鍵</strong>：錨點拖曳連續繪製構件；<strong>滑鼠右鍵</strong>：按住滑過快速拆除[cite: 1, 2]。</li>
+          <li><strong>滑鼠左鍵</strong>：錨點拖曳連續繪製構件；<strong>滑鼠右鍵</strong>：按住滑過快速拆除。</li>
           <li><strong>ESC 鍵</strong>：快速關閉此指南視窗。</li>
         </ul>
       </div>
@@ -1042,7 +1043,7 @@ class MakerSandboxApp {
               stroke: "#fef3c7", "stroke-width": 2
             })
           : createSvgElement("circle", {
-              cx: px, py: py, r: 6,
+              cx: px, cy: py, r: 6,
               fill: "#ffedd5", stroke: "#29150d", "stroke-width": 1.6
             });
 
@@ -1136,6 +1137,7 @@ class MakerSandboxApp {
       targetNode.element = el;
     }
     this.renderPillarsVisual();
+    this.syncDashboard();
     this.audio.playNodePlace();
   }
 
@@ -1293,10 +1295,13 @@ class MakerSandboxApp {
     document.getElementById("ui-grid-desc").textContent = `${this.config.rowCount}x${this.config.colCount}`;
     document.getElementById("lbl-weight").textContent = `${this.config.weight.toFixed(1)} t`;
 
+    // 計算總造價：橋面材 $200，支撐材 $100，水中基柱每座 $500
     let totalCost = 0;
     for (const m of this.members.values()) {
       totalCost += (m.isRoad ? 200 : 100);
     }
+    totalCost += (this.config.pillars ? this.config.pillars.length * 500 : 0);
+
     const costElem = document.getElementById("ui-cost");
     if (costElem) {
       costElem.textContent = `$${totalCost.toLocaleString()}`;
