@@ -125,12 +125,18 @@
     background: rgba(56, 189, 248, 0.2);
     transform: translateY(-2px);
   }
-  .mode-card.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    border-style: dashed;
+  .btn-sandbox {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    color: #ffffff;
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
   }
-  .tag-soon {
+  .btn-sandbox:hover {
+    background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(251, 191, 36, 0.55);
+  }
+  .tag-sandbox {
     font-size: 11px;
     font-weight: 700;
     padding: 3px 8px;
@@ -198,17 +204,19 @@
       </div>
     </div>
 
-    <div class="mode-card disabled">
+    <div class="mode-card">
       <div>
         <div class="mode-title">
-          <span>可能會更新的模式</span>
-          <span class="tag-soon">COMING SOON</span>
+          <span>創客沙盒模式</span>
+          <span class="tag-sandbox">SANDBOX</span>
         </div>
         <div class="mode-desc">
-          無預算與節點限制，自由設計超大跨距結構，進行極限載重應力破壞實驗(也可能不會更新...)。
+          無預算與構件限制，自訂網格維度、水中基柱與雙材料系統，進行極限載重應力破壞與跳台實驗。
         </div>
       </div>
-      <div style="font-size: 12px; font-weight: 600; color: #64748b;">敬請期待</div>
+      <div class="btn-group">
+        <a href="sandbox.html" class="btn-launch btn-sandbox">🛠️ 進入沙盒模式</a>
+      </div>
     </div>
   </div>
 
