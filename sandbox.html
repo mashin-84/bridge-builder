@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bridge Builder - 創客沙盒模式 (Maker Sandbox)</title>
+<style>
+  * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(135deg, #180d09 0%, #29150d 50%, #3d2013 100%);
+    color: #fdf8f6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Microsoft JhengHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 16px 18px;
+    min-height: 100vh;
+  }
+
+  .top-hud {
+    width: 100%;
+    max-width: 1340px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .badges-left {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .hud-badge {
+    background: rgba(255, 240, 230, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    border-radius: 10px;
+    padding: 5px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 72px;
+  }
+  .hud-badge .title { 
+    font-size: 10px; 
+    font-weight: 700; 
+    letter-spacing: 1px; 
+    color: #fdba74;
+  }
+  .hud-badge .num { 
+    font-size: 17px; 
+    font-weight: 800; 
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+  }
+  .hud-badge.load-badge .num { color: #f59e0b; }
+  .hud-badge.beam-badge .num { color: #fb923c; }
+  .hud-badge.cost-badge .num { color: #34d399; }
+
+  .actions-right { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: 9px;
+    border: 1px solid rgba(251, 146, 60, 0.25);
+    background: rgba(255, 240, 230, 0.06);
+    backdrop-filter: blur(10px);
+    color: #fed7aa;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  button:hover { 
+    background: rgba(251, 146, 60, 0.16);
+    border-color: rgba(251, 146, 60, 0.45);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+  button:active { transform: translateY(1px); }
+
+  .btn-test { 
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    border: 1px solid rgba(251, 191, 36, 0.5);
+    color: #ffffff;
+    box-shadow: 0 0 16px rgba(217, 119, 6, 0.4);
+  }
+  .btn-test:hover { 
+    background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+  }
+  .btn-test.running { 
+    background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+    border-color: rgba(251, 146, 60, 0.5);
+    box-shadow: 0 0 16px rgba(194, 65, 12, 0.45);
+  }
+  .btn-danger { 
+    background: rgba(239, 68, 68, 0.14);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+  }
+  .btn-danger:hover {
+    background: rgba(239, 68, 68, 0.28);
+    border-color: rgba(239, 68, 68, 0.55);
+  }
+
+  .sandbox-panel {
+    width: 100%;
+    max-width: 1340px;
+    background: rgba(41, 21, 13, 0.85);
+    border: 1px solid rgba(251, 146, 60, 0.22);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(16px);
+    border-radius: 12px;
+    padding: 8px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12.5px;
+  }
+  .param-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fdba74;
+    font-weight: 600;
+  }
+  .param-group select, .param-group input[type="range"] {
+    background: rgba(24, 13, 9, 0.9);
+    border: 1px solid rgba(251, 146, 60, 0.3);
+    color: #ffedd5;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+  .param-group select:hover { border-color: #f59e0b; }
+  .param-group input[type="range"] {
+    accent-color: #f59e0b;
+    width: 100px;
+  }
+
+  /* 遊戲舞台與材料選擇器的並排主容器 */
+  .game-main-container {
+    width: 100%;
+    max-width: 1340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  #stage-wrapper {
+    position: relative;
+    flex: 1;
+    height: 615px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(251, 146, 60, 0.25);
+    box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.7);
+    background: #180d09;
+    transform: translate3d(0, 0, 0);
+  }
+  svg#game-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  /* 右側垂直懸浮泡泡材料選擇器（完全在峽谷舞台外側） */
+  .material-bubble-dock {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: rgba(41, 21, 13, 0.88);
+    padding: 10px;
+    border-radius: 46px;
+    border: 1.5px solid rgba(251, 146, 60, 0.35);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(16px);
+    flex-shrink: 0;
+  }
+  .bubble-btn {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: rgba(24, 13, 9, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #fed7aa;
+    padding: 0;
+    position: relative;
+  }
+  .bubble-btn .icon {
+    font-size: 26px;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .bubble-btn .label {
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+  }
+  .bubble-btn:hover {
+    transform: scale(1.06);
+    background: rgba(251, 146, 60, 0.22);
+    border-color: rgba(251, 146, 60, 0.6);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  }
+  .bubble-btn.active {
+    transform: scale(1.08);
+    background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+    border-color: #fbbf24;
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.7);
+  }
+  .bubble-btn.active.road-active {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    border-color: #cbd5e1;
+    box-shadow: 0 0 20px rgba(203, 213, 225, 0.7);
+  }
+
+  @keyframes snapPulse {
+    0%, 100% { opacity: 0.9; stroke-width: 6px; filter: drop-shadow(0 0 6px #ef4444); }
+    50% { opacity: 0.15; stroke-width: 2px; filter: none; }
+  }
+  .beam-broken-flash {
+    animation: snapPulse 0.35s infinite ease-in-out !important;
+    stroke: #ef4444 !important;
+    stroke-dasharray: 6 6 !important;
+  }
+
+  #status-bubble {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    display: none;
+    z-index: 15;
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    background: rgba(41, 21, 13, 0.95);
+    backdrop-filter: blur(16px);
+    color: #fbbf24;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    max-width: 90%;
+  }
+  #status-bubble.danger {
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+  }
+
+  #confirm-dialog {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(41, 21, 13, 0.96);
+    border: 1px solid rgba(251, 146, 60, 0.35);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 24px 32px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 40;
+    text-align: center;
+    max-width: 440px;
+  }
+  #confirm-dialog h3 { font-size: 19px; font-weight: 800; color: #ffedd5; }
+  #confirm-dialog p { font-size: 13px; color: #fdba74; line-height: 1.5; }
+  .dialog-buttons { display: flex; gap: 10px; margin-top: 4px; }
+  .btn-confirm-yes { background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%); color: #ffffff; padding: 7px 16px; border-radius: 8px; }
+  .btn-confirm-no { background: rgba(255, 240, 230, 0.08); color: #fed7aa; padding: 7px 14px; border-radius: 8px; }
+
+  /* 說明與指南全螢幕遮罩彈窗 */
+  #guide-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 7, 4, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  #guide-modal-box {
+    width: 100%;
+    max-width: 680px;
+    max-height: 90vh;
+    background: rgba(36, 18, 11, 0.96);
+    border: 1.5px solid rgba(251, 146, 60, 0.4);
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
+    border-radius: 20px;
+    padding: 24px 28px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    color: #ffedd5;
+  }
+  .guide-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(251, 146, 60, 0.25);
+    padding-bottom: 12px;
+  }
+  .guide-header h2 {
+    font-size: 21px;
+    font-weight: 800;
+    color: #fed7aa;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-close-modal {
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    color: #fdba74;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+  }
+  .btn-close-modal:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .guide-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #fed7aa;
+  }
+  .guide-section {
+    background: rgba(24, 13, 9, 0.6);
+    border: 1px solid rgba(251, 146, 60, 0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+  .guide-section h4 {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #fbbf24;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .guide-section ul {
+    margin-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .guide-section strong {
+    color: #ffffff;
+  }
+  .btn-modal-start {
+    align-self: center;
+    padding: 10px 32px;
+    font-size: 15px;
+    font-weight: 800;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    border: 1px solid rgba(251, 191, 36, 0.5);
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.4);
+    transition: all 0.2s ease;
+  }
+  .btn-modal-start:hover {
+    background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+    box-shadow: 0 6px 20px rgba(251, 191, 36, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .tip-footer {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #a8715a;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-hud">
+  <div class="badges-left">
+    <div class="hud-badge load-badge">
+      <span class="title">LOAD</span>
+      <span class="num" id="ui-weight">2.5 t</span>
+    </div>
+    <div class="hud-badge beam-badge">
+      <span class="title">BEAMS</span>
+      <span class="num" id="ui-lines">0</span>
+    </div>
+    <div class="hud-badge cost-badge">
+      <span class="title">COST</span>
+      <span class="num" id="ui-cost">$0</span>
+    </div>
+    <div class="hud-badge">
+      <span class="title">GRID</span>
+      <span class="num" id="ui-grid-desc">5x9</span>
+    </div>
+  </div>
+  <div class="actions-right">
+    <button id="btn-guide-open" style="color: #6ee7b7; border-color: rgba(52, 211, 153, 0.45);">📖 模式指南</button>
+    <button id="btn-toggle-audio">🔊 音效開</button>
+    <a href="index.html" style="text-decoration: none;"><button>首頁</button></a>
+    <button id="btn-share" style="color: #fbbf24; border-color: rgba(251, 191, 36, 0.45);">🔗 複製分享連結</button>
+    <button class="btn-danger" id="btn-clear">清空橋樑</button>
+    <button class="btn-test" id="btn-test">踩油門出發</button>
+  </div>
+</div>
+
+<div class="sandbox-panel">
+  <div class="param-group">
+    <label>垂直層數：</label>
+    <select id="cfg-rows">
+      <option value="3">3 層</option>
+      <option value="4">4 層</option>
+      <option value="5" selected>5 層 (標準)</option>
+      <option value="6">6 層</option>
+      <option value="7">7 層 (高塔)</option>
+    </select>
+  </div>
+  <div class="param-group">
+    <label>水平柱數：</label>
+    <select id="cfg-cols">
+      <option value="5">5 柱 (小跨)</option>
+      <option value="7">7 柱</option>
+      <option value="9" selected>9 柱 (標準)</option>
+      <option value="11">11 柱</option>
+      <option value="13">13 柱 (長跨)</option>
+      <option value="15">15 柱 (極限)</option>
+    </select>
+  </div>
+  <div class="param-group">
+    <label>左岸起點：</label>
+    <select id="cfg-start-row"></select>
+  </div>
+  <div class="param-group">
+    <label>右岸終點：</label>
+    <select id="cfg-end-row"></select>
+  </div>
+  <div class="param-group">
+    <label>載重：<span id="lbl-weight" style="color: #f59e0b;">2.5t</span></label>
+    <input type="range" id="cfg-weight" min="0.5" max="25" step="0.5" value="2.5">
+  </div>
+</div>
+
+<!-- 主內容容器：將峽谷畫布與右側材料面板橫向並列 -->
+<div class="game-main-container">
+  <div id="stage-wrapper">
+    <svg id="game-svg" viewBox="0 0 900 460" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="status-bubble"></div>
+
+    <div id="confirm-dialog">
+      <h3>重構地形確認</h3>
+      <p>調整網格層數或柱數將清空當前搭建的梁柱構件。確定要繼續嗎？</p>
+      <div class="dialog-buttons">
+        <button class="btn-confirm-yes" id="btn-conf-yes">確認重置</button>
+        <button class="btn-confirm-no" id="btn-conf-no">保留目前橋樑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 材料選擇器：獨立置於右側，絕不遮擋任何端點錨點 -->
+  <div class="material-bubble-dock">
+    <button class="bubble-btn active road-active" id="btn-bubble-road" title="切換為橋面材 (快速鍵: 1)">
+      <span class="icon">🚗</span>
+      <span class="label">橋面材</span>
+    </button>
+    <button class="bubble-btn" id="btn-bubble-truss" title="切換為支撐材 (快速鍵: 2)">
+      <span class="icon">🏗️</span>
+      <span class="label">支撐材</span>
+    </button>
+  </div>
+</div>
+
+<div class="tip-footer">
+  <span>操作提示：【滑鼠左鍵】拖曳連續造橋；【滑鼠右鍵】滑過快速拆除；畫過已有桿件可【直接覆蓋換材質】。</span>
+  <span>右側懸浮泡泡：按【1】切換灰色柏油路面（每根 $200），按【2】切換褐色桁架骨架（每根 $100）。</span>
+</div>
+
+<!-- 模式說明與特徵展示彈窗 -->
+<div id="guide-modal-overlay">
+  <div id="guide-modal-box">
+    <div class="guide-header">
+      <h2>🛠️ 創客沙盒模式指南 (Maker Sandbox)</h2>
+      <button class="btn-close-modal" id="btn-guide-close" title="關閉視窗 (ESC)">&times;</button>
+    </div>
+    <div class="guide-content">
+      <div class="guide-section">
+        <h4>🎯 模式定位與核心差異（相較經典模式）</h4>
+        <ul>
+          <li><strong>無預算與構件上限限制</strong>：捨棄關卡模式的固定預算束縛，您可以隨意揮灑靈感搭建超大型複雜桁架或懸索橋[cite: 1, 2]。</li>
+          <li><strong>參數自由定義世界</strong>：可自由設定垂直 3~7 層、水平 5~15 柱跨距、發車與抵達高程，以及高達 25.0t 的重載卡車。</li>
+          <li><strong>水中基柱自由開闢</strong>：直接【點擊最底層任一中間節點】，即可升起固定石柱基底作為中繼支撐[cite: 1, 2]。</li>
+        </ul>
+      </div>
+
+      <div class="guide-section">
+        <h4>🧱 雙材料系統與動態造價</h4>
+        <ul>
+          <li><strong>🚗 橋面材 (Road) ｜ 單價 $200</strong>：柏油灰色粗線，為<strong>卡車專屬行駛動線</strong>。幾何限制僅允許水平與 45° 斜坡（排除垂直攀爬）。</li>
+          <li><strong>🏗️ 支撐材 (Truss) ｜ 單價 $100</strong>：褐色鋼構細線，為內部桁架骨架。支援水平、垂直與 45° 任何方向連線，不干擾車輛行駛。</li>
+          <li><strong>直接覆蓋機制</strong>：手持當前材料直接劃過已有線段，可即時變更材質，無需先刪除。</li>
+          <li><strong>動態成本顯示</strong>：頂部 COST 看板即時結算總花費，協助評估結構經濟效益。</li>
+        </ul>
+      </div>
+
+      <div class="guide-section">
+        <h4>🔬 真實物理模擬引擎特色</h4>
+        <ul>
+          <li><strong>Verlet 數值積分與歐拉挫屈</strong>：精準模擬桿件受壓挫屈折斷、受拉斷裂與彈性蓄能[cite: 1, 2, 5]。</li>
+          <li><strong>動態相對下陷極限</strong>：採用相較於未受力初始高度的相對變形判定，深淵低層發車也能平穩通過。</li>
+          <li><strong>慣性與斜坡力學</strong>：卡車依據真實重力坡度進行加速、剎車阻力與極限翻覆模擬；支援跳台飛車特技[cite: 1, 2]。</li>
+        </ul>
+      </div>
+
+      <div class="guide-section">
+        <h4>🎮 快捷鍵指南</h4>
+        <ul>
+          <li><strong>數字鍵 1 / 2</strong>：即時切換【橋面材】與【支撐材】。</li>
+          <li><strong>滑鼠左鍵</strong>：錨點拖曳連續繪製構件；<strong>滑鼠右鍵</strong>：按住滑過快速拆除[cite: 1, 2]。</li>
+          <li><strong>ESC 鍵</strong>：快速關閉此指南視窗。</li>
+        </ul>
+      </div>
+    </div>
+    <button class="btn-modal-start" id="btn-guide-start">進入沙盒開始建造</button>
+  </div>
+</div>
+
+<script>
+class ProceduralAudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.muted = localStorage.getItem("bridge_builder_audio_muted") === "true";
+    this.engineOsc = null;
+    this.engineGain = null;
+    this.creakTimer = 0;
+    this.deleteTimer = 0;
+  }
+
+  ensureContext() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === "suspended") {
+      this.ctx.resume();
+    }
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    localStorage.setItem("bridge_builder_audio_muted", this.muted ? "true" : "false");
+    if (this.muted) this.stopEngineSound();
+    return !this.muted;
+  }
+
+  playNodePlace() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(420, t);
+    osc.frequency.exponentialRampToValueAtTime(760, t + 0.08);
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.09);
+  }
+
+  playMemberDelete() {
+    if (this.muted) return;
+    const now = Date.now();
+    if (now - this.deleteTimer < 120) return;
+    this.deleteTimer = now;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(260, t);
+    osc.frequency.exponentialRampToValueAtTime(120, t + 0.09);
+    gain.gain.setValueAtTime(0.22, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
+
+  startEngineSound() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx || this.engineOsc) return;
+    const t = this.ctx.currentTime;
+    this.engineOsc = this.ctx.createOscillator();
+    this.engineGain = this.ctx.createGain();
+    this.engineOsc.type = "sawtooth";
+    this.engineOsc.frequency.setValueAtTime(58, t);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(180, t);
+    this.engineGain.gain.setValueAtTime(0.001, t);
+    this.engineGain.gain.linearRampToValueAtTime(0.08, t + 0.3);
+    this.engineOsc.connect(filter);
+    filter.connect(this.engineGain);
+    this.engineGain.connect(this.ctx.destination);
+    this.engineOsc.start(t);
+  }
+
+  updateEngineTone(pitchMultiplier = 1) {
+    if (this.engineOsc && this.ctx && !this.muted) {
+      const baseFreq = 58 * Math.max(0.65, Math.min(2.1, pitchMultiplier));
+      this.engineOsc.frequency.setTargetAtTime(baseFreq, this.ctx.currentTime, 0.08);
+    }
+  }
+
+  stopEngineSound() {
+    if (this.engineOsc && this.ctx) {
+      const t = this.ctx.currentTime;
+      try {
+        this.engineGain.gain.linearRampToValueAtTime(0.001, t + 0.15);
+        this.engineOsc.stop(t + 0.16);
+      } catch (e) {}
+      this.engineOsc = null;
+      this.engineGain = null;
+    }
+  }
+
+  playStressCreak() {
+    if (this.muted) return;
+    const now = Date.now();
+    if (now - this.creakTimer < 450) return;
+    this.creakTimer = now;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(840, t);
+    osc.frequency.linearRampToValueAtTime(1100, t + 0.06);
+    osc.frequency.linearRampToValueAtTime(720, t + 0.13);
+    gain.gain.setValueAtTime(0.03, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.15);
+  }
+
+  playBeamSnap() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gainOsc = this.ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(240, t);
+    osc.frequency.exponentialRampToValueAtTime(45, t + 0.22);
+    gainOsc.gain.setValueAtTime(0.55, t);
+    gainOsc.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    osc.connect(gainOsc);
+    gainOsc.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.23);
+
+    const bufferSize = this.ctx.sampleRate * 0.14;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.28));
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseFilter = this.ctx.createBiquadFilter();
+    noiseFilter.type = "bandpass";
+    noiseFilter.frequency.setValueAtTime(1400, t);
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.45, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(this.ctx.destination);
+    noise.start(t);
+  }
+
+  playCrashImpact() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(110, t);
+    osc.frequency.exponentialRampToValueAtTime(28, t + 0.45);
+    gain.gain.setValueAtTime(0.7, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.46);
+  }
+
+  playVictoryHorn() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const notes = [440, 554.37, 659.25];
+    const t = this.ctx.currentTime;
+    notes.forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, t + i * 0.1);
+      gain.gain.setValueAtTime(0.001, t + i * 0.1);
+      gain.gain.linearRampToValueAtTime(0.2, t + i * 0.1 + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.42);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t + i * 0.1);
+      osc.stop(t + i * 0.1 + 0.44);
+    });
+  }
+}
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const VIEW_W = 900;
+const VIEW_H = 460;
+const CANYON_FLOOR_Y = 415;
+
+const FIXED_DELTA = 1 / 60;
+const MAX_PHYSICS_SUB_TICKS = 5;
+const INTEGRATION_SUB_STEPS = 8;
+const DAMPING_NORMAL = 0.985;
+const DAMPING_STABILIZE = 0.920;
+const STABILIZE_TICKS = 25;
+
+const GRAVITY_ACCEL = 200;
+const MEMBER_STIFFNESS = 14500;
+const LIVE_LOAD_FACTOR = 420;
+
+const TENSILE_LIMIT = 7200;
+const ROAD_TENSILE_LIMIT = 7800;
+const COMPRESSIVE_REF_CAPACITY = 6500;
+const BUCKLING_NOMINAL_LENGTH = 75;
+
+const BASE_VEHICLE_SPEED = 145;
+const MIN_ALLOWED_SPEED = 100;
+const MAX_SPRINT_SPEED = 230;
+
+const SNAP_COOLDOWN_TICKS = 8;
+
+// 顏色標準定義：橋面材（瀝青柏油灰）、支撐材（結構暖褐鋼）
+const COLOR_ROAD = "#64748b";
+const COLOR_TRUSS = "#8c4424";
+
+function createSvgElement(tag, attrs = {}) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+const pointKey = (c, r) => `p_${c}_${r}`;
+const linkKey = (p1, p2) => (p1 < p2 ? `${p1}_${p2}` : `${p2}_${p1}`);
+const euclideanDistance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function checkSegmentsIntersect(p1, p2, p3, p4) {
+  const ccw = (a, b, c) => (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
+  return (ccw(p1, p3, p4) !== ccw(p2, p3, p4)) && (ccw(p1, p2, p3) !== ccw(p1, p2, p4));
+}
+
+const evaluateCompressionLimit = (len) => {
+  const theoretical = COMPRESSIVE_REF_CAPACITY * Math.pow(BUCKLING_NOMINAL_LENGTH / len, 2);
+  const floorCapacity = COMPRESSIVE_REF_CAPACITY * 0.55;
+  return Math.max(floorCapacity, theoretical);
+};
+
+class MakerSandboxApp {
+  constructor(svgElement) {
+    this.svg = svgElement;
+    this.stageWrapper = document.getElementById("stage-wrapper");
+    this.audio = new ProceduralAudioEngine();
+
+    this.config = {
+      rowCount: 5,
+      colCount: 9,
+      startRow: 2,
+      endRow: 2,
+      weight: 2.5,
+      pillars: []
+    };
+
+    this.activeMaterial = "road";
+
+    this.pendingConfigChange = null;
+    this.operationalState = "edit";
+    this.isErasing = false;
+    this.lastErasePt = null;
+    this.dragPathNodeIds = [];
+
+    this.nodes = new Map();
+    this.members = new Map();
+
+    this.vehicle = null;
+    this.simulationOutcome = null;
+    this.stabilizeCounter = 0;
+    this.snapCooldown = 0;
+    this.rafHandle = null;
+
+    this.lastFrameTime = 0;
+    this.timeAccumulator = 0;
+    this.shakeIntensity = 0;
+
+    this.initLayers();
+    this.populateElevationSelectors();
+    this.bindEvents();
+    this.syncAudioButton();
+
+    if (!this.loadFromHash()) {
+      this.rebuildWorld();
+    }
+  }
+
+  initLayers() {
+    this.svg.innerHTML = `
+      <defs>
+        <linearGradient id="warmSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#140a06" />
+          <stop offset="55%" stop-color="#2a150c" />
+          <stop offset="100%" stop-color="#4a2414" />
+        </linearGradient>
+        <linearGradient id="canyonFarGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2a150c" />
+          <stop offset="100%" stop-color="#180d09" />
+        </linearGradient>
+        <linearGradient id="cliffGradLeft" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#2c140b" />
+          <stop offset="70%" stop-color="#4d2516" />
+          <stop offset="100%" stop-color="#6e351f" />
+        </linearGradient>
+        <linearGradient id="cliffGradRight" x1="1" y1="0" x2="0" y2="0">
+          <stop offset="0%" stop-color="#2c140b" />
+          <stop offset="70%" stop-color="#4d2516" />
+          <stop offset="100%" stop-color="#6e351f" />
+        </linearGradient>
+        <linearGradient id="sunsetMist" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d97706" stop-opacity="0.18" />
+          <stop offset="100%" stop-color="#7c2d12" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient id="pillarGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#431407" />
+          <stop offset="40%" stop-color="#78350f" />
+          <stop offset="70%" stop-color="#9a3412" />
+          <stop offset="100%" stop-color="#431407" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="${VIEW_W}" height="${VIEW_H}" fill="url(#warmSky)"/>
+      <g id="layer-scenic-bg"></g>
+      <g id="layer-pillars"></g>
+      <g id="layer-cliffs"></g>
+      <g id="layer-members"></g>
+      <g id="layer-preview"></g>
+      <g id="layer-nodes"></g>
+      <g id="layer-vehicle"></g>
+    `;
+    this.bgLayer = document.getElementById("layer-scenic-bg");
+    this.pillarLayer = document.getElementById("layer-pillars");
+    this.cliffLayer = document.getElementById("layer-cliffs");
+    this.memberLayer = document.getElementById("layer-members");
+    this.previewLayer = document.getElementById("layer-preview");
+    this.nodeLayer = document.getElementById("layer-nodes");
+    this.vehicleLayer = document.getElementById("layer-vehicle");
+  }
+
+  setMaterial(mat) {
+    this.activeMaterial = mat;
+    const btnRoad = document.getElementById("btn-bubble-road");
+    const btnTruss = document.getElementById("btn-bubble-truss");
+
+    if (mat === "road") {
+      btnRoad.classList.add("active", "road-active");
+      btnTruss.classList.remove("active");
+    } else {
+      btnTruss.classList.add("active");
+      btnRoad.classList.remove("active", "road-active");
+    }
+    this.notifyStatus(`已切換為【${mat === 'road' ? '🚗 灰色橋面材 ($200)' : '🏗️ 褐色支撐材 ($100)'}】 (按鍵: ${mat === 'road' ? '1' : '2'})`, false);
+  }
+
+  populateElevationSelectors() {
+    const selStart = document.getElementById("cfg-start-row");
+    const selEnd = document.getElementById("cfg-end-row");
+    const rows = this.config.rowCount;
+
+    const curS = Math.min(this.config.startRow, rows - 1);
+    const curE = Math.min(this.config.endRow, rows - 1);
+
+    selStart.innerHTML = "";
+    selEnd.innerHTML = "";
+
+    for (let r = 0; r < rows; r++) {
+      const optS = document.createElement("option");
+      optS.value = r;
+      optS.textContent = `第 ${r + 1} 層 (高程 ${r})`;
+      if (r === curS) optS.selected = true;
+      selStart.appendChild(optS);
+
+      const optE = document.createElement("option");
+      optE.value = r;
+      optE.textContent = `第 ${r + 1} 層 (高程 ${r})`;
+      if (r === curE) optE.selected = true;
+      selEnd.appendChild(optE);
+    }
+
+    this.config.startRow = curS;
+    this.config.endRow = curE;
+  }
+
+  rebuildWorld() {
+    this.abortSimulation();
+    this.nodes.clear();
+    this.members.clear();
+    this.memberLayer.innerHTML = "";
+    this.nodeLayer.innerHTML = "";
+    this.cliffLayer.innerHTML = "";
+    this.bgLayer.innerHTML = "";
+    this.pillarLayer.innerHTML = "";
+
+    const rows = this.config.rowCount;
+    const cols = this.config.colCount;
+
+    const maxSpanW = 740;
+    const maxSpanH = 310;
+    const stepX = maxSpanW / (cols - 1);
+    const stepY = maxSpanH / (rows - 1);
+    const cellStep = Math.min(stepX, stepY);
+
+    this.cellStep = cellStep;
+    this.maxLinkDist = cellStep * 1.45;
+
+    const gridW = (cols - 1) * cellStep;
+    const gridH = (rows - 1) * cellStep;
+
+    const startX = (VIEW_W - gridW) / 2;
+    const startY = 85 + (310 - gridH) / 2;
+
+    this.leftAnchorX = startX;
+    this.rightAnchorX = startX + gridW;
+
+    this.bgLayer.appendChild(createSvgElement("polygon", {
+      points: `0,270 120,200 240,240 370,180 500,230 630,170 760,220 900,160 900,460 0,460`,
+      fill: "url(#canyonFarGrad)",
+      opacity: "0.6"
+    }));
+    this.bgLayer.appendChild(createSvgElement("rect", {
+      x: 0, y: startY + 40, width: VIEW_W, height: VIEW_H - (startY + 40), fill: "url(#sunsetMist)"
+    }));
+
+    for (let c = 0; c < cols; c++) {
+      const px = startX + c * cellStep;
+      for (let r = 0; r < rows; r++) {
+        const py = startY + r * cellStep;
+        const isSideAnchor = (c === 0 || c === cols - 1);
+        const isBottomRow = (r === rows - 1);
+        const isPillarActive = isBottomRow && this.config.pillars.includes(c);
+        const isFixed = isSideAnchor || isPillarActive;
+
+        const node = {
+          id: pointKey(c, r),
+          col: c,
+          row: r,
+          x: px,
+          y: py,
+          baseX: px,
+          baseY: py,
+          vx: 0,
+          vy: 0,
+          mass: 1.0,
+          isFixed: isFixed,
+          isPillar: isPillarActive
+        };
+        this.nodes.set(node.id, node);
+
+        const el = isFixed
+          ? createSvgElement("rect", {
+              x: px - 8, y: py - 8, width: 16, height: 16, rx: 4,
+              fill: isPillarActive ? "#d97706" : "#b45309",
+              stroke: "#fef3c7", "stroke-width": 2
+            })
+          : createSvgElement("circle", {
+              cx: px, py: py, r: 6,
+              fill: "#ffedd5", stroke: "#29150d", "stroke-width": 1.6
+            });
+
+        el.style.cursor = isBottomRow ? "pointer" : "default";
+        el.dataset.nodeId = node.id;
+        node.element = el;
+        this.nodeLayer.appendChild(el);
+      }
+    }
+
+    const startNode = this.nodes.get(pointKey(0, this.config.startRow));
+    const endNode = this.nodes.get(pointKey(cols - 1, this.config.endRow));
+    const leftRoadY = startNode ? startNode.y : startY + this.config.startRow * cellStep;
+    const rightRoadY = endNode ? endNode.y : startY + this.config.endRow * cellStep;
+
+    const leftCliff = createSvgElement("polygon", {
+      points: `0,0 ${startX},0 ${startX},${leftRoadY} ${startX - 15},${leftRoadY + 35} ${startX - 35},${leftRoadY + 80} ${startX - 18},${leftRoadY + 140} ${startX - 40},${VIEW_H} 0,${VIEW_H}`,
+      fill: "url(#cliffGradLeft)"
+    });
+    const rightCliff = createSvgElement("polygon", {
+      points: `900,0 ${this.rightAnchorX},0 ${this.rightAnchorX},${rightRoadY} ${this.rightAnchorX + 15},${rightRoadY + 35} ${this.rightAnchorX + 35},${rightRoadY + 80} ${this.rightAnchorX + 18},${rightRoadY + 140} ${this.rightAnchorX + 40},${VIEW_H} 900,${VIEW_H}`,
+      fill: "url(#cliffGradRight)"
+    });
+
+    const leftRoadDeck = createSvgElement("rect", {
+      x: 0, y: leftRoadY - 4, width: startX, height: 8, fill: "#27120a", rx: 2
+    });
+    const leftRoadEdge = createSvgElement("rect", {
+      x: 0, y: leftRoadY - 4, width: startX, height: 2.2, fill: "#f59e0b", opacity: 0.95
+    });
+    const rightRoadDeck = createSvgElement("rect", {
+      x: this.rightAnchorX, y: rightRoadY - 4, width: VIEW_W - this.rightAnchorX, height: 8, fill: "#27120a", rx: 2
+    });
+    const rightRoadEdge = createSvgElement("rect", {
+      x: this.rightAnchorX, y: rightRoadY - 4, width: VIEW_W - this.rightAnchorX, height: 2.2, fill: "#f59e0b", opacity: 0.95
+    });
+
+    this.cliffLayer.append(leftCliff, rightCliff, leftRoadDeck, leftRoadEdge, rightRoadDeck, rightRoadEdge);
+    this.renderPillarsVisual();
+    this.syncDashboard();
+  }
+
+  renderPillarsVisual() {
+    this.pillarLayer.innerHTML = "";
+    const rows = this.config.rowCount;
+    for (const c of this.config.pillars) {
+      const bottomNode = this.nodes.get(pointKey(c, rows - 1));
+      if (!bottomNode) continue;
+      const colX = bottomNode.x;
+      const colY = bottomNode.y;
+
+      const pBody = createSvgElement("rect", {
+        x: colX - 12, y: colY, width: 24, height: Math.max(0, CANYON_FLOOR_Y - colY + 15),
+        rx: 3, fill: "url(#pillarGrad)", stroke: "#451a03", "stroke-width": 1.2
+      });
+      const pCap = createSvgElement("rect", {
+        x: colX - 15, y: colY - 3, width: 30, height: 7, rx: 2, fill: "#b45309", stroke: "#fef3c7", "stroke-width": 1.2
+      });
+      this.pillarLayer.append(pBody, pCap);
+    }
+  }
+
+  togglePillarAt(colIdx) {
+    if (colIdx <= 0 || colIdx >= this.config.colCount - 1) return;
+    const idx = this.config.pillars.indexOf(colIdx);
+    if (idx >= 0) {
+      this.config.pillars.splice(idx, 1);
+    } else {
+      this.config.pillars.push(colIdx);
+    }
+
+    const rows = this.config.rowCount;
+    const targetNode = this.nodes.get(pointKey(colIdx, rows - 1));
+    if (targetNode) {
+      const isFixed = this.config.pillars.includes(colIdx);
+      targetNode.isFixed = isFixed;
+      targetNode.isPillar = isFixed;
+
+      const el = isFixed
+        ? createSvgElement("rect", {
+            x: targetNode.x - 8, y: targetNode.y - 8, width: 16, height: 16, rx: 4,
+            fill: "#d97706", stroke: "#fef3c7", "stroke-width": 2
+          })
+        : createSvgElement("circle", {
+            cx: targetNode.x, cy: targetNode.y, r: 6,
+            fill: "#ffedd5", stroke: "#29150d", "stroke-width": 1.6
+          });
+      el.style.cursor = "pointer";
+      el.dataset.nodeId = targetNode.id;
+      targetNode.element.replaceWith(el);
+      targetNode.element = el;
+    }
+    this.renderPillarsVisual();
+    this.audio.playNodePlace();
+  }
+
+  connectNodes(id1, id2, explicitType = null) {
+    if (id1 === id2) return;
+    const n1 = this.nodes.get(id1);
+    const n2 = this.nodes.get(id2);
+    if (!n1 || !n2) return;
+    if (n1.isFixed && n2.isFixed) return;
+
+    const dc = Math.abs(n1.col - n2.col);
+    const dr = Math.abs(n1.row - n2.row);
+    if (dc > 1 || dr > 1) return;
+
+    const targetType = explicitType || this.activeMaterial;
+
+    if (targetType === "road" && dc === 0) return;
+
+    const span = euclideanDistance(n1, n2);
+    if (span > this.maxLinkDist) return;
+
+    const key = linkKey(id1, id2);
+    const existing = this.members.get(key);
+
+    if (existing) {
+      if (existing.type !== targetType) {
+        existing.type = targetType;
+        existing.isRoad = (targetType === "road");
+        this.audio.playNodePlace();
+        this.refreshVisuals();
+      }
+      return;
+    }
+
+    const isRoad = (targetType === "road");
+    const beamLine = createSvgElement("line", {
+      stroke: isRoad ? COLOR_ROAD : COLOR_TRUSS,
+      "stroke-width": isRoad ? 7.5 : 4.5,
+      "stroke-linecap": "round"
+    });
+    beamLine.style.cursor = "pointer";
+    beamLine.dataset.linkId = key;
+    this.memberLayer.appendChild(beamLine);
+
+    this.members.set(key, {
+      key: key,
+      n1: id1,
+      n2: id2,
+      type: targetType,
+      restLength: span,
+      ruptured: false,
+      isRoad: isRoad,
+      axialForce: 0,
+      stressRatio: 0,
+      element: beamLine
+    });
+
+    this.audio.playNodePlace();
+    this.refreshVisuals();
+  }
+
+  disconnectMember(key) {
+    const member = this.members.get(key);
+    if (member) {
+      member.element.remove();
+      this.members.delete(key);
+      this.audio.playMemberDelete();
+      this.refreshVisuals();
+    }
+  }
+
+  removeAllMembers() {
+    for (const m of this.members.values()) m.element.remove();
+    this.members.clear();
+    this.cancelDragPreview();
+    this.audio.playMemberDelete();
+    this.refreshVisuals();
+  }
+
+  triggerImpactShake(intensity = 14) {
+    this.shakeIntensity = Math.max(this.shakeIntensity, intensity);
+  }
+
+  resolveStressPalette(ratio) {
+    if (ratio < 0.5) return "#10b981";
+    if (ratio < 0.85) return "#f59e0b";
+    return "#ef4444";
+  }
+
+  renderBeamsVisual(isSimulating) {
+    for (const m of this.members.values()) {
+      const nodeA = this.nodes.get(m.n1);
+      const nodeB = this.nodes.get(m.n2);
+      m.element.setAttribute("x1", nodeA.x);
+      m.element.setAttribute("y1", nodeA.y);
+      m.element.setAttribute("x2", nodeB.x);
+      m.element.setAttribute("y2", nodeB.y);
+
+      if (m.ruptured) {
+        m.element.setAttribute("class", "beam-broken-flash");
+      } else {
+        m.element.removeAttribute("class");
+        let tint = m.isRoad ? COLOR_ROAD : COLOR_TRUSS;
+        if (isSimulating) tint = this.resolveStressPalette(m.stressRatio);
+        m.element.setAttribute("stroke", tint);
+        m.element.setAttribute("stroke-width", m.isRoad ? "7.5" : "4.5");
+      }
+    }
+  }
+
+  renderNodesVisual() {
+    const activeNodeIds = new Set();
+    for (const m of this.members.values()) {
+      if (!m.ruptured) {
+        activeNodeIds.add(m.n1);
+        activeNodeIds.add(m.n2);
+      }
+    }
+    const dragPathSet = new Set(this.dragPathNodeIds);
+
+    for (const n of this.nodes.values()) {
+      if (n.isFixed) {
+        n.element.setAttribute("opacity", "1");
+        n.element.style.pointerEvents = (this.operationalState === "edit") ? "auto" : "none";
+        continue;
+      }
+
+      const hasActiveConn = activeNodeIds.has(n.id);
+      if (this.operationalState === "simulate" && !hasActiveConn) {
+        n.element.setAttribute("opacity", "0");
+        n.element.style.pointerEvents = "none";
+        continue;
+      }
+
+      n.element.setAttribute("opacity", "1");
+      n.element.style.pointerEvents = (this.operationalState === "edit") ? "auto" : "none";
+      n.element.setAttribute("cx", n.x);
+      n.element.setAttribute("cy", n.y);
+
+      const isChosen = dragPathSet.has(n.id);
+      n.element.setAttribute("fill", isChosen ? "#fbbf24" : "#ffedd5");
+      n.element.setAttribute("r", isChosen ? 7.5 : 6);
+    }
+  }
+
+  refreshVisuals() {
+    this.renderBeamsVisual(false);
+    this.renderNodesVisual();
+    this.syncDashboard();
+  }
+
+  syncDashboard() {
+    document.getElementById("ui-weight").textContent = `${this.config.weight.toFixed(1)} t`;
+    document.getElementById("ui-lines").textContent = `${this.members.size}`;
+    document.getElementById("ui-grid-desc").textContent = `${this.config.rowCount}x${this.config.colCount}`;
+    document.getElementById("lbl-weight").textContent = `${this.config.weight.toFixed(1)} t`;
+
+    let totalCost = 0;
+    for (const m of this.members.values()) {
+      totalCost += (m.isRoad ? 200 : 100);
+    }
+    const costElem = document.getElementById("ui-cost");
+    if (costElem) {
+      costElem.textContent = `$${totalCost.toLocaleString()}`;
+    }
+
+    const btn = document.getElementById("btn-test");
+    if (this.operationalState === "edit") {
+      btn.textContent = "踩油門出發";
+      btn.classList.remove("running");
+    } else {
+      btn.textContent = "進站調整";
+      btn.classList.add("running");
+    }
+  }
+
+  syncAudioButton() {
+    const btn = document.getElementById("btn-toggle-audio");
+    if (btn) btn.textContent = this.audio.muted ? "🔇 靜音" : "🔊 音效開";
+  }
+
+  notifyStatus(text, isDanger = false) {
+    const elem = document.getElementById("status-bubble");
+    elem.textContent = text;
+    if (isDanger) elem.classList.add("danger");
+    else elem.classList.remove("danger");
+    elem.style.display = "block";
+  }
+
+  dismissStatus() {
+    document.getElementById("status-bubble").style.display = "none";
+  }
+
+  exportShareUrl() {
+    const serializedMembers = [];
+    for (const m of this.members.values()) {
+      serializedMembers.push({ k: m.key, t: m.type });
+    }
+
+    const dataObj = {
+      cfg: this.config,
+      mem: serializedMembers
+    };
+    const jsonStr = JSON.stringify(dataObj);
+    const hashStr = encodeURIComponent(btoa(jsonStr));
+    const fullUrl = `${window.location.origin}${window.location.pathname}#d=${hashStr}`;
+
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      this.notifyStatus("沙盒網址已複製至剪貼簿！包含雙材料配置");
+    }).catch(() => {
+      window.location.hash = `d=${hashStr}`;
+      this.notifyStatus("請手動複製網址列的最新網址");
+    });
+  }
+
+  loadFromHash() {
+    const hash = window.location.hash;
+    if (!hash.startsWith("#d=")) return false;
+    try {
+      const b64 = decodeURIComponent(hash.replace("#d=", ""));
+      const parsed = JSON.parse(atob(b64));
+      if (parsed.cfg && parsed.mem) {
+        this.config = parsed.cfg;
+        document.getElementById("cfg-rows").value = this.config.rowCount;
+        document.getElementById("cfg-cols").value = this.config.colCount;
+        document.getElementById("cfg-weight").value = this.config.weight;
+        this.populateElevationSelectors();
+        document.getElementById("cfg-start-row").value = this.config.startRow;
+        document.getElementById("cfg-end-row").value = this.config.endRow;
+
+        this.rebuildWorld();
+
+        parsed.mem.forEach(item => {
+          const key = (typeof item === "string") ? item : item.k;
+          const type = (typeof item === "object" && item.t) ? item.t : "road";
+          const parts = key.split("_");
+          const id1 = `${parts[0]}_${parts[1]}_${parts[2]}`;
+          const id2 = `${parts[3]}_${parts[4]}_${parts[5]}`;
+          this.connectNodes(id1, id2, type);
+        });
+        this.notifyStatus("已精準還原創客沙盒關卡與雙材料結構！");
+        return true;
+      }
+    } catch (e) {
+      console.warn("無法解析分享參數", e);
+    }
+    return false;
+  }
+
+  createVehicleArt() {
+    const g = createSvgElement("g");
+    const cargoBed = createSvgElement("rect", {
+      x: -24, y: -18, width: 26, height: 16, rx: 2, fill: "#c2410c"
+    });
+    const cargoAccent = createSvgElement("rect", {
+      x: -22, y: -16, width: 22, height: 12, rx: 1, fill: "#ea580c"
+    });
+    const cab = createSvgElement("polygon", {
+      points: "4,-2  4,-19  16,-19  25,-10  25,-2", fill: "#f59e0b"
+    });
+    const windowGlass = createSvgElement("polygon", {
+      points: "7,-16  15,-16  22,-10  7,-10", fill: "#1c1917", opacity: 0.85
+    });
+    const chassis = createSvgElement("rect", {
+      x: -26, y: -2, width: 53, height: 4, rx: 1, fill: "#292524"
+    });
+    const wheelR = createSvgElement("circle", { cx: -14, cy: 3, r: 5.5, fill: "#1c1917" });
+    const hubR = createSvgElement("circle", { cx: -14, cy: 3, r: 2.2, fill: "#d6d3d1" });
+    const wheelF = createSvgElement("circle", { cx: 16, cy: 3, r: 5.5, fill: "#1c1917" });
+    const hubF = createSvgElement("circle", { cx: 16, cy: 3, r: 2.2, fill: "#d6d3d1" });
+    const headlight = createSvgElement("circle", { cx: 25.5, cy: -5, r: 2, fill: "#fef08a" });
+
+    g.append(cargoBed, cargoAccent, cab, windowGlass, chassis, wheelR, hubR, wheelF, hubF, headlight);
+    return g;
+  }
+
+  findSupportingDeckAt(px, py) {
+    let bestMember = null;
+    let minScore = Infinity;
+
+    for (const m of this.members.values()) {
+      if (m.ruptured || !m.isRoad) continue;
+
+      let nA = this.nodes.get(m.n1);
+      let nB = this.nodes.get(m.n2);
+
+      if (nA.x > nB.x) { const tmp = nA; nA = nB; nB = tmp; }
+
+      const dx = nB.x - nA.x;
+      if (Math.abs(dx) < 1.0) continue;
+
+      const minX = nA.x - 2.0;
+      const maxX = nB.x + 2.0;
+
+      if (px >= minX && px <= maxX) {
+        const clampedPx = Math.max(nA.x, Math.min(nB.x, px));
+        const ratio = (clampedPx - nA.x) / dx;
+        const deckY = nA.y + (nB.y - nA.y) * ratio;
+
+        const dy = (py + 8) - deckY;
+
+        if (dy >= -28 && dy <= 48) {
+          const absDy = Math.abs(dy);
+          if (absDy < minScore) {
+            minScore = absDy;
+            bestMember = { member: m, nA, nB, deckY, ratio };
+          }
+        }
+      }
+    }
+    return bestMember;
+  }
+
+  launchSimulation() {
+    this.operationalState = "simulate";
+    this.cancelDragPreview();
+    this.dismissStatus();
+    this.snapCooldown = 0;
+    this.shakeIntensity = 0;
+
+    for (const n of this.nodes.values()) {
+      n.x = n.baseX; n.y = n.baseY;
+      n.vx = 0; n.vy = 0;
+    }
+    for (const m of this.members.values()) {
+      m.ruptured = false;
+      m.axialForce = 0;
+      m.stressRatio = 0;
+    }
+
+    const startAnchor = this.nodes.get(pointKey(0, this.config.startRow));
+
+    this.vehicle = {
+      x: startAnchor.x - 30,
+      y: startAnchor.y - 8,
+      currentSpeed: BASE_VEHICLE_SPEED,
+      pitchAngle: 0,
+      vx: BASE_VEHICLE_SPEED,
+      vy: 0,
+      descentSpeed: 0,
+      isFalling: false,
+      graphic: this.createVehicleArt()
+    };
+
+    this.simulationOutcome = null;
+    this.stabilizeCounter = STABILIZE_TICKS;
+    this.syncDashboard();
+
+    this.vehicleLayer.innerHTML = "";
+    this.vehicleLayer.appendChild(this.vehicle.graphic);
+
+    this.lastFrameTime = performance.now();
+    this.timeAccumulator = 0;
+    this.audio.startEngineSound();
+
+    this.rafHandle = requestAnimationFrame(this.stepPhysicsLoop.bind(this));
+  }
+
+  abortSimulation() {
+    if (this.rafHandle) cancelAnimationFrame(this.rafHandle);
+    this.operationalState = "edit";
+    this.audio.stopEngineSound();
+
+    for (const n of this.nodes.values()) {
+      n.x = n.baseX; n.y = n.baseY;
+      n.vx = 0; n.vy = 0;
+    }
+    for (const m of this.members.values()) {
+      m.ruptured = false;
+      m.axialForce = 0;
+      m.stressRatio = 0;
+    }
+    this.vehicle = null;
+    this.simulationOutcome = null;
+    this.vehicleLayer.innerHTML = "";
+    this.dismissStatus();
+    this.cancelDragPreview();
+    this.shakeIntensity = 0;
+    this.stageWrapper.style.transform = "translate3d(0, 0, 0)";
+    this.refreshVisuals();
+  }
+
+  integratePhysicsTick() {
+    const subDt = FIXED_DELTA / INTEGRATION_SUB_STEPS;
+    const isStabilizing = (this.stabilizeCounter > 0);
+    const fluidDamping = isStabilizing ? DAMPING_STABILIZE : DAMPING_NORMAL;
+    const payloadWeight = LIVE_LOAD_FACTOR * this.config.weight;
+
+    let activeDeck = null;
+    if (this.vehicle && !this.vehicle.isFalling && !isStabilizing) {
+      activeDeck = this.findSupportingDeckAt(this.vehicle.x, this.vehicle.y);
+    }
+
+    const activeNodeSet = new Set();
+    for (const m of this.members.values()) {
+      if (!m.ruptured) {
+        activeNodeSet.add(m.n1);
+        activeNodeSet.add(m.n2);
+      }
+    }
+
+    for (let sub = 0; sub < INTEGRATION_SUB_STEPS; sub++) {
+      for (const n of this.nodes.values()) {
+        if (!n.isFixed && activeNodeSet.has(n.id)) {
+          n.fx = 0;
+          n.fy = GRAVITY_ACCEL * n.mass;
+        }
+      }
+
+      if (activeDeck) {
+        const { nA, nB, ratio } = activeDeck;
+        if (!nA.isFixed) nA.fy += payloadWeight * (1 - ratio);
+        if (!nB.isFixed) nB.fy += payloadWeight * ratio;
+      }
+
+      for (const m of this.members.values()) {
+        if (m.ruptured) continue;
+        const nodeA = this.nodes.get(m.n1);
+        const nodeB = this.nodes.get(m.n2);
+        const dx = nodeB.x - nodeA.x;
+        const dy = nodeB.y - nodeA.y;
+        const currentLen = Math.hypot(dx, dy) || 1e-4;
+        const dirX = dx / currentLen;
+        const dirY = dy / currentLen;
+
+        const force = MEMBER_STIFFNESS * (currentLen - m.restLength);
+        m.axialForce = force;
+
+        if (!nodeA.isFixed) {
+          nodeA.fx += force * dirX;
+          nodeA.fy += force * dirY;
+        }
+        if (!nodeB.isFixed) {
+          nodeB.fx -= force * dirX;
+          nodeB.fy -= force * dirY;
+        }
+      }
+
+      for (const n of this.nodes.values()) {
+        if (n.isFixed || !activeNodeSet.has(n.id)) continue;
+        n.vx = (n.vx + (n.fx / n.mass) * subDt) * fluidDamping;
+        n.vy = (n.vy + (n.fy / n.mass) * subDt) * fluidDamping;
+
+        const speed = Math.hypot(n.vx, n.vy);
+        if (speed > 800) {
+          n.vx *= 800 / speed;
+          n.vy *= 800 / speed;
+        }
+
+        n.x += n.vx * subDt;
+        n.y += n.vy * subDt;
+      }
+    }
+
+    if (this.snapCooldown > 0) this.snapCooldown--;
+
+    let globalMaxStress = 0;
+    if (!isStabilizing && this.snapCooldown === 0) {
+      let worstMember = null;
+      let maxRatio = 1.0;
+
+      for (const m of this.members.values()) {
+        if (m.ruptured) continue;
+        const tensileCap = m.isRoad ? ROAD_TENSILE_LIMIT : TENSILE_LIMIT;
+        const capacity = (m.axialForce >= 0) ? tensileCap : evaluateCompressionLimit(m.restLength);
+        m.stressRatio = Math.abs(m.axialForce) / capacity;
+
+        if (m.stressRatio > globalMaxStress) globalMaxStress = m.stressRatio;
+        if (m.stressRatio > maxRatio) {
+          maxRatio = m.stressRatio;
+          worstMember = m;
+        }
+      }
+
+      if (globalMaxStress >= 0.88) this.audio.playStressCreak();
+      if (worstMember) {
+        worstMember.ruptured = true;
+        this.snapCooldown = SNAP_COOLDOWN_TICKS;
+        this.audio.playBeamSnap();
+        this.triggerImpactShake(16);
+      }
+    }
+  }
+
+  progressVehicleTrajectory() {
+    if (!this.vehicle || this.stabilizeCounter > 0 || this.simulationOutcome) return;
+
+    const startAnchor = this.nodes.get(pointKey(0, this.config.startRow));
+    const endAnchor = this.nodes.get(pointKey(this.config.colCount - 1, this.config.endRow));
+
+    const isLeftBankApproach = (this.vehicle.x < this.leftAnchorX);
+    const isRightBankLanded = (this.vehicle.x >= this.rightAnchorX);
+
+    if (isLeftBankApproach) {
+      this.vehicle.y = startAnchor.y - 8;
+      this.vehicle.pitchAngle = 0;
+      this.vehicle.currentSpeed = BASE_VEHICLE_SPEED;
+      this.vehicle.x += this.vehicle.currentSpeed * FIXED_DELTA;
+      this.audio.updateEngineTone(1.0);
+      return;
+    }
+
+    if (isRightBankLanded) {
+      const approachDy = Math.abs(this.vehicle.y - (endAnchor.y - 8));
+      if (approachDy < 25) {
+        this.vehicle.y = endAnchor.y - 8;
+        this.vehicle.pitchAngle = 0;
+        this.vehicle.x += BASE_VEHICLE_SPEED * FIXED_DELTA;
+        this.audio.updateEngineTone(1.0);
+
+        if (this.vehicle.x >= this.rightAnchorX + 35) {
+          return this.triggerVictory("恭喜！卡車成功征服峽谷並順利抵達對岸！");
+        }
+        return;
+      }
+    }
+
+    const deckInfo = this.findSupportingDeckAt(this.vehicle.x, this.vehicle.y);
+
+    if (!deckInfo) {
+      this.vehicle.descentSpeed += 980 * FIXED_DELTA;
+      this.vehicle.y += this.vehicle.descentSpeed * FIXED_DELTA;
+      this.vehicle.x += (this.vehicle.currentSpeed || BASE_VEHICLE_SPEED) * FIXED_DELTA * 0.95;
+      this.vehicle.pitchAngle = Math.min(65, (this.vehicle.pitchAngle || 0) + 70 * FIXED_DELTA);
+
+      if (this.vehicle.y >= CANYON_FLOOR_Y - 5) {
+        this.audio.playCrashImpact();
+        this.triggerImpactShake(22);
+        return this.triggerDefeat("卡車墜落深谷粉碎！");
+      }
+
+      const catchDeck = this.findSupportingDeckAt(this.vehicle.x, this.vehicle.y);
+      if (catchDeck && this.vehicle.descentSpeed > 0) {
+        if (this.vehicle.descentSpeed > 460) {
+          this.audio.playCrashImpact();
+          this.triggerImpactShake(24);
+          return this.triggerDefeat("著陸衝擊力道過猛，底盤粉碎！");
+        }
+        this.vehicle.descentSpeed = 0;
+      }
+      return;
+    }
+
+    const { nA, nB, deckY } = deckInfo;
+
+    const initialDeckY = nA.baseY + (nB.baseY - nA.baseY) * (this.vehicle.x - nA.baseX) / (nB.baseX - nA.baseX);
+    const sinkAmount = deckY - initialDeckY;
+    const maxAllowedSink = this.cellStep * 0.85;
+
+    if (sinkAmount > maxAllowedSink || deckY > CANYON_FLOOR_Y - 15) {
+      this.vehicle.isFalling = true;
+      this.vehicle.descentSpeed = Math.max(60, this.vehicle.descentSpeed || 0);
+      this.triggerImpactShake(18);
+      return this.triggerDefeat("結構過度受拉變形坍塌，卡車脫軌墜落！");
+    }
+
+    const dy = nB.y - nA.y;
+    const dx = nB.x - nA.x;
+    const roadSlopeAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+    if (Math.abs(roadSlopeAngle) > 55) {
+      this.vehicle.isFalling = true;
+      const slopeRad = roadSlopeAngle * (Math.PI / 180);
+      this.vehicle.descentSpeed = Math.sin(slopeRad) * this.vehicle.currentSpeed;
+      this.vehicle.currentSpeed *= 0.25;
+      this.triggerImpactShake(16);
+      return this.triggerDefeat("坡度過陡超出輪胎抓地極限，卡車失控翻覆！");
+    }
+
+    if (this.simulationOutcome === "lose") return;
+
+    this.vehicle.y = deckY - 8;
+    this.vehicle.pitchAngle = roadSlopeAngle;
+
+    const slopeRad = roadSlopeAngle * (Math.PI / 180);
+    const gravityEffort = -Math.sin(slopeRad) * 65;
+
+    this.vehicle.currentSpeed = Math.max(
+      MIN_ALLOWED_SPEED,
+      Math.min(MAX_SPRINT_SPEED, BASE_VEHICLE_SPEED + gravityEffort)
+    );
+
+    const speedFactor = this.vehicle.currentSpeed / BASE_VEHICLE_SPEED;
+    this.audio.updateEngineTone(speedFactor * (1.0 + (roadSlopeAngle / 45) * 0.25));
+    this.vehicle.x += this.vehicle.currentSpeed * FIXED_DELTA;
+  }
+
+  refreshVehicleTransform() {
+    if (this.vehicle && this.vehicle.graphic) {
+      const pitch = this.vehicle.pitchAngle || 0;
+      this.vehicle.graphic.setAttribute("transform", `translate(${this.vehicle.x} ${this.vehicle.y}) rotate(${pitch})`);
+    }
+  }
+
+  triggerVictory(message) {
+    if (this.simulationOutcome) return;
+    this.simulationOutcome = "win";
+    if (this.rafHandle) cancelAnimationFrame(this.rafHandle);
+    this.audio.stopEngineSound();
+    this.audio.playVictoryHorn();
+    this.notifyStatus(message, false);
+  }
+
+  triggerDefeat(message) {
+    if (this.simulationOutcome) return;
+    this.simulationOutcome = "lose";
+    this.audio.stopEngineSound();
+    this.renderBeamsVisual(true);
+    this.refreshVehicleTransform();
+    this.notifyStatus(message, true);
+  }
+
+  stepPhysicsLoop(currentTimestamp) {
+    if (this.simulationOutcome === "win") return;
+    if (!this.lastFrameTime) this.lastFrameTime = currentTimestamp;
+
+    const elapsedSeconds = Math.min(0.1, (currentTimestamp - this.lastFrameTime) / 1000);
+    this.lastFrameTime = currentTimestamp;
+    this.timeAccumulator += elapsedSeconds;
+
+    let subTicks = 0;
+    while (this.timeAccumulator >= FIXED_DELTA && subTicks < MAX_PHYSICS_SUB_TICKS) {
+      this.integratePhysicsTick();
+      if (this.stabilizeCounter > 0) this.stabilizeCounter--;
+      this.progressVehicleTrajectory();
+      this.timeAccumulator -= FIXED_DELTA;
+      subTicks++;
+      if (this.simulationOutcome === "win") break;
+    }
+
+    if (this.shakeIntensity > 0.1) {
+      const offX = (Math.random() * 2 - 1) * this.shakeIntensity;
+      const offY = (Math.random() * 2 - 1) * this.shakeIntensity;
+      this.stageWrapper.style.transform = `translate3d(${offX.toFixed(1)}px, ${offY.toFixed(1)}px, 0)`;
+      this.shakeIntensity *= 0.88;
+    } else if (this.shakeIntensity !== 0) {
+      this.shakeIntensity = 0;
+      this.stageWrapper.style.transform = "translate3d(0, 0, 0)";
+    }
+
+    this.renderBeamsVisual(true);
+    this.renderNodesVisual();
+    this.refreshVehicleTransform();
+
+    if (!this.simulationOutcome) {
+      this.rafHandle = requestAnimationFrame(this.stepPhysicsLoop.bind(this));
+    }
+  }
+
+  getSvgCoordinates(e) {
+    const pt = this.svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    return pt.matrixTransform(this.svg.getScreenCTM().inverse());
+  }
+
+  cancelDragPreview() {
+    this.dragPathNodeIds = [];
+    this.previewLayer.innerHTML = "";
+    this.renderNodesVisual();
+  }
+
+  requestGridRebuild(changeCallback) {
+    if (this.members.size > 0) {
+      this.pendingConfigChange = changeCallback;
+      document.getElementById("confirm-dialog").style.display = "flex";
+    } else {
+      changeCallback();
+      this.rebuildWorld();
+    }
+  }
+
+  bindEvents() {
+    const guideOverlay = document.getElementById("guide-modal-overlay");
+    const openGuide = () => { guideOverlay.style.display = "flex"; };
+    const closeGuide = () => { guideOverlay.style.display = "none"; };
+
+    document.getElementById("btn-guide-open").addEventListener("click", openGuide);
+    document.getElementById("btn-guide-close").addEventListener("click", closeGuide);
+    document.getElementById("btn-guide-start").addEventListener("click", closeGuide);
+
+    guideOverlay.addEventListener("click", (e) => {
+      if (e.target === guideOverlay) closeGuide();
+    });
+
+    document.getElementById("btn-bubble-road").addEventListener("click", () => this.setMaterial("road"));
+    document.getElementById("btn-bubble-truss").addEventListener("click", () => this.setMaterial("truss"));
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeGuide();
+      } else if (e.key === "1") {
+        this.setMaterial("road");
+      } else if (e.key === "2") {
+        this.setMaterial("truss");
+      }
+    });
+
+    document.getElementById("cfg-rows").addEventListener("change", (e) => {
+      const val = parseInt(e.target.value, 10);
+      this.requestGridRebuild(() => {
+        this.config.rowCount = val;
+        this.populateElevationSelectors();
+      });
+    });
+
+    document.getElementById("cfg-cols").addEventListener("change", (e) => {
+      const val = parseInt(e.target.value, 10);
+      this.requestGridRebuild(() => {
+        this.config.colCount = val;
+        this.config.pillars = this.config.pillars.filter(c => c < val - 1);
+      });
+    });
+
+    document.getElementById("cfg-start-row").addEventListener("change", (e) => {
+      this.config.startRow = parseInt(e.target.value, 10);
+      this.rebuildWorld();
+    });
+
+    document.getElementById("cfg-end-row").addEventListener("change", (e) => {
+      this.config.endRow = parseInt(e.target.value, 10);
+      this.rebuildWorld();
+    });
+
+    document.getElementById("cfg-weight").addEventListener("input", (e) => {
+      this.config.weight = parseFloat(e.target.value);
+      this.syncDashboard();
+    });
+
+    document.getElementById("btn-conf-yes").addEventListener("click", () => {
+      document.getElementById("confirm-dialog").style.display = "none";
+      if (this.pendingConfigChange) {
+        this.pendingConfigChange();
+        this.pendingConfigChange = null;
+        this.rebuildWorld();
+      }
+    });
+
+    document.getElementById("btn-conf-no").addEventListener("click", () => {
+      document.getElementById("confirm-dialog").style.display = "none";
+      document.getElementById("cfg-rows").value = this.config.rowCount;
+      document.getElementById("cfg-cols").value = this.config.colCount;
+      this.pendingConfigChange = null;
+    });
+
+    document.getElementById("btn-share").addEventListener("click", () => this.exportShareUrl());
+    document.getElementById("btn-clear").addEventListener("click", () => {
+      this.abortSimulation();
+      this.removeAllMembers();
+    });
+    document.getElementById("btn-test").addEventListener("click", () => {
+      if (this.operationalState === "edit") this.launchSimulation();
+      else this.abortSimulation();
+    });
+    document.getElementById("btn-toggle-audio").addEventListener("click", () => {
+      this.audio.toggleMute();
+      this.syncAudioButton();
+    });
+
+    this.svg.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    this.svg.addEventListener("pointerdown", (e) => {
+      if (this.operationalState !== "edit") return;
+
+      const pt = this.getSvgCoordinates(e);
+      const targetLinkId = e.target?.dataset?.linkId;
+      const targetNodeId = e.target?.dataset?.nodeId;
+
+      if (e.button === 2) {
+        this.isErasing = true;
+        this.lastErasePt = pt;
+        if (targetLinkId) this.disconnectMember(targetLinkId);
+        return;
+      }
+
+      if (e.button === 0) {
+        if (targetLinkId) {
+          const m = this.members.get(targetLinkId);
+          if (m) {
+            this.connectNodes(m.n1, m.n2, this.activeMaterial);
+          }
+          return;
+        }
+
+        if (targetNodeId) {
+          const clickedNode = this.nodes.get(targetNodeId);
+          if (clickedNode && clickedNode.row === this.config.rowCount - 1 &&
+              clickedNode.col > 0 && clickedNode.col < this.config.colCount - 1) {
+            this.togglePillarAt(clickedNode.col);
+            return;
+          }
+          this.dragPathNodeIds = [targetNodeId];
+          this.renderNodesVisual();
+          return;
+        }
+
+        let nearest = null;
+        let minD = 36;
+        for (const n of this.nodes.values()) {
+          const d = Math.hypot(n.x - pt.x, n.y - pt.y);
+          if (d < minD) { minD = d; nearest = n; }
+        }
+        if (nearest) {
+          if (nearest.row === this.config.rowCount - 1 &&
+              nearest.col > 0 && nearest.col < this.config.colCount - 1) {
+            this.togglePillarAt(nearest.col);
+            return;
+          }
+          this.dragPathNodeIds = [nearest.id];
+          this.renderNodesVisual();
+          return;
+        }
+
+        this.cancelDragPreview();
+      }
+    });
+
+    this.svg.addEventListener("pointermove", (e) => {
+      if (this.operationalState !== "edit") return;
+      const pt = this.getSvgCoordinates(e);
+
+      if (this.isErasing) {
+        if (this.lastErasePt) {
+          const p1 = this.lastErasePt;
+          const p2 = pt;
+          const toDelete = [];
+          for (const m of this.members.values()) {
+            const nA = this.nodes.get(m.n1);
+            const nB = this.nodes.get(m.n2);
+            if (nA && nB && checkSegmentsIntersect(p1, p2, nA, nB)) {
+              toDelete.push(m.key);
+            }
+          }
+          for (const k of toDelete) this.disconnectMember(k);
+        }
+        const hovered = document.elementFromPoint(e.clientX, e.clientY);
+        if (hovered?.dataset?.linkId) this.disconnectMember(hovered.dataset.linkId);
+        this.lastErasePt = pt;
+        return;
+      }
+
+      if (this.dragPathNodeIds.length === 0) return;
+
+      let lastNode = this.nodes.get(this.dragPathNodeIds[this.dragPathNodeIds.length - 1]);
+
+      const mouseDx = pt.x - lastNode.x;
+      const mouseDy = pt.y - lastNode.y;
+      const mouseDist = Math.hypot(mouseDx, mouseDy);
+
+      let closest = null;
+      let minScore = Infinity;
+
+      let isIntentionalDiagonal = false;
+      if (mouseDist > 20) {
+        const angleDeg = Math.abs(Math.atan2(mouseDy, mouseDx) * (180 / Math.PI));
+        if ((angleDeg >= 22.5 && angleDeg <= 67.5) || (angleDeg >= 112.5 && angleDeg <= 157.5)) {
+          isIntentionalDiagonal = true;
+        }
+      }
+
+      for (const n of this.nodes.values()) {
+        if (n.id === lastNode.id) continue;
+        const dc = Math.abs(lastNode.col - n.col);
+        const dr = Math.abs(lastNode.row - n.row);
+        if (dc > 1 || dr > 1) continue;
+
+        if (this.activeMaterial === "road" && dc === 0) continue;
+
+        const isDiag = (dc === 1 && dr === 1);
+        const distToCursor = Math.hypot(n.x - pt.x, n.y - pt.y);
+
+        const maxAllowedRadius = isDiag ? 42 : (isIntentionalDiagonal ? 16 : 28);
+        if (distToCursor > maxAllowedRadius) continue;
+
+        const score = distToCursor * (isDiag ? 0.75 : (isIntentionalDiagonal ? 2.5 : 1.0));
+        if (score < minScore) {
+          minScore = score;
+          closest = n;
+        }
+      }
+
+      if (closest) {
+        const pathLen = this.dragPathNodeIds.length;
+        if (pathLen >= 2 && closest.id === this.dragPathNodeIds[pathLen - 2]) {
+          this.dragPathNodeIds.pop();
+          lastNode = this.nodes.get(this.dragPathNodeIds[this.dragPathNodeIds.length - 1]);
+        } else if (closest.id !== lastNode.id) {
+          const span = euclideanDistance(lastNode, closest);
+          if (span <= this.maxLinkDist && !(lastNode.isFixed && closest.isFixed)) {
+            this.dragPathNodeIds.push(closest.id);
+            lastNode = closest;
+          }
+        }
+      }
+
+      this.previewLayer.innerHTML = "";
+      const isRoadMat = (this.activeMaterial === "road");
+      const previewStroke = isRoadMat ? COLOR_ROAD : "#a8715a";
+
+      for (let i = 0; i < this.dragPathNodeIds.length - 1; i++) {
+        const nA = this.nodes.get(this.dragPathNodeIds[i]);
+        const nB = this.nodes.get(this.dragPathNodeIds[i + 1]);
+        const seg = createSvgElement("line", {
+          x1: nA.x, y1: nA.y, x2: nB.x, y2: nB.y,
+          stroke: previewStroke, "stroke-width": isRoadMat ? 5.5 : 3.5, "stroke-linecap": "round",
+          "stroke-dasharray": "6 6", opacity: "0.9"
+        });
+        seg.style.pointerEvents = "none";
+        this.previewLayer.appendChild(seg);
+      }
+
+      const activeSpan = Math.hypot(pt.x - lastNode.x, pt.y - lastNode.y);
+      const isTailValid = (activeSpan <= this.maxLinkDist);
+      const tailSeg = createSvgElement("line", {
+        x1: lastNode.x, y1: lastNode.y, x2: pt.x, y2: pt.y,
+        stroke: isTailValid ? previewStroke : "#ef4444",
+        "stroke-width": isRoadMat ? 5.5 : 3.5, "stroke-linecap": "round",
+        "stroke-dasharray": "6 6", opacity: "0.9"
+      });
+      tailSeg.style.pointerEvents = "none";
+      this.previewLayer.appendChild(tailSeg);
+
+      this.renderNodesVisual();
+    });
+
+    window.addEventListener("pointerup", (e) => {
+      if (this.operationalState !== "edit") return;
+      if (e.button === 2) {
+        this.isErasing = false;
+        this.lastErasePt = null;
+        return;
+      }
+
+      if (this.dragPathNodeIds.length > 1) {
+        for (let i = 0; i < this.dragPathNodeIds.length - 1; i++) {
+          this.connectNodes(this.dragPathNodeIds[i], this.dragPathNodeIds[i + 1]);
+        }
+      }
+      this.cancelDragPreview();
+    });
+  }
+}
+
+window.onload = () => {
+  const canvasSvg = document.getElementById("game-svg");
+  new MakerSandboxApp(canvasSvg);
+};
+</script>
+</body>
+</html>
