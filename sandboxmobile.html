@@ -543,7 +543,8 @@
   </div>
 </div>
 
-<script src="physics-core.js?v=1"></script>
+<script src="config.js?v=1"></script>
+<script src="physics-core.js?v=2"></script>
 <script>
 class ProceduralAudioEngine {
   constructor() {
@@ -1446,7 +1447,7 @@ class MakerSandboxApp {
   }
 
   launchSimulation() {
-    fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=sandbox_mobile_launch", { mode: "no-cors" }).catch(() => {});
+    window.BridgeConfig && window.BridgeConfig.trackHit("sandbox_mobile_launch");
 
     this.operationalState = "simulate";
     this.cancelDragPreview();
@@ -2069,7 +2070,7 @@ window.addEventListener("resize", updateAppViewport);
 window.addEventListener("orientationchange", updateAppViewport);
 
 window.onload = () => {
-  fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=sandbox_mobile_visit", { mode: "no-cors" }).catch(() => {});
+  window.BridgeConfig && window.BridgeConfig.trackHit("sandbox_mobile_visit");
   updateAppViewport();
   const canvasSvg = document.getElementById("game-svg");
   new MakerSandboxApp(canvasSvg);
