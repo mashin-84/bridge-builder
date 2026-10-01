@@ -1458,6 +1458,7 @@ class MakerSandboxApp {
   }
 
   launchSimulation() {
+   fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=sandbox_launch", { mode: "no-cors" }).catch(() => {});
     this.operationalState = "simulate";
     this.cancelDragPreview();
     this.dismissStatus();
@@ -2023,6 +2024,7 @@ class MakerSandboxApp {
 }
 
 window.onload = () => {
+  fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=sandbox_visit", { mode: "no-cors" }).catch(() => {});
   const canvasSvg = document.getElementById("game-svg");
   new MakerSandboxApp(canvasSvg);
 };
