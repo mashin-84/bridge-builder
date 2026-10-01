@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bridge Builder - 峽谷橋樑工程師</title>
+<meta name="description" content="STEM 物理力學互動模擬：用桁架結構打造橋樑，讓重型卡車安全跨越峽谷。提供經典闖關與創客沙盒，支援電腦與手機。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="峽谷橋樑工程師 - Bridge Builder">
+<meta property="og:description" content="STEM 物理力學互動模擬：用桁架結構打造橋樑，讓重型卡車安全跨越峽谷。">
+<meta property="og:locale" content="zh_TW">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%89%3C/text%3E%3C/svg%3E">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
   body {
@@ -185,6 +191,16 @@
     border-color: rgba(56, 189, 248, 0.3);
     transform: translateY(-1px);
   }
+  .btn-launch.is-recommended {
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+  }
+  .btn-launch.is-recommended::after {
+    content: " ✓ 建議";
+    font-size: 11px;
+    font-weight: 700;
+    color: #fde68a;
+  }
 </style>
 </head>
 <body>
@@ -232,8 +248,9 @@
 
   <div class="footer-note">
     <div>
-      本模擬系統玩法參考自 Build the Bridge（zerethon.com）等線上橋樑建造遊戲，由本科技中心為教學需求改作並擴充，<br>
-      僅供非營利教育推廣用途。歡迎教師以連結方式引導學生使用。
+  本模擬遊戲玩法參考自 Build the Bridge（zerethon.com）等線上橋樑建造遊戲，
+  由本科技中心為教學需求改作並擴充（含教學關、沙盒模式與繁體中文介面），
+  僅供非營利教育推廣用途。歡迎教師以連結方式引導學生使用。
     </div>
     <!-- 數據儀表板入口圖示按鈕 -->
     <a href="dashboard.html" class="btn-dashboard">
@@ -243,5 +260,15 @@
   </div>
 </div>
 
+<script>
+// 依裝置突顯建議的版本（僅視覺提示，不會強制跳轉）
+(function () {
+  try {
+    var touchFirst = window.matchMedia("(pointer: coarse)").matches && window.matchMedia("(hover: none)").matches;
+    var sel = touchFirst ? ".btn-mobile, .btn-sandbox-mobile" : ".btn-desktop, .btn-sandbox";
+    document.querySelectorAll(sel).forEach(function (el) { el.classList.add("is-recommended"); });
+  } catch (err) {}
+})();
+</script>
 </body>
 </html>
