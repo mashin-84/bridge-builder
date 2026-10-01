@@ -2,19 +2,54 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bridge Builder - 創客沙盒模式 (Maker Sandbox)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Bridge Builder - 創客沙盒模式 (Mobile)</title>
 <style>
-  * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
+  * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #180d09;
+    touch-action: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+
   body {
     background: linear-gradient(135deg, #180d09 0%, #29150d 50%, #3d2013 100%);
     color: #fdf8f6;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Microsoft JhengHei", sans-serif;
     display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #app-container {
+    width: 100vw;
+    height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
+    display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 12px 16px 18px;
-    min-height: 100vh;
+    padding: env(safe-area-inset-top, 4px) env(safe-area-inset-right, 6px) env(safe-area-inset-bottom, 4px) env(safe-area-inset-left, 6px);
+    box-sizing: border-box;
+    transform-origin: center center;
+  }
+
+  @media (orientation: portrait) {
+    #app-container {
+      width: 100dvh !important;
+      height: 100dvw !important;
+      transform: rotate(-90deg);
+      position: absolute;
+      top: calc(50% - 50dvw);
+      left: calc(50% - 50dvh);
+      padding: env(safe-area-inset-right, 4px) env(safe-area-inset-bottom, 6px) env(safe-area-inset-left, 4px) env(safe-area-inset-top, 6px);
+    }
   }
 
   .top-hud {
@@ -23,68 +58,61 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-    gap: 8px;
+    margin-bottom: 3px;
+    gap: 6px;
+    flex-shrink: 0;
   }
-  .badges-left {
-    display: flex;
-    gap: 8px;
+
+  .hud-stats-group {
+    display: inline-flex;
     align-items: center;
-    flex-wrap: wrap;
-  }
-  .hud-badge {
-    background: rgba(255, 240, 230, 0.05);
+    gap: 6px;
+    background: rgba(255, 240, 230, 0.06);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(251, 146, 60, 0.25);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-    border-radius: 10px;
-    padding: 5px 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 72px;
-  }
-  .hud-badge .title { 
-    font-size: 10px; 
-    font-weight: 700; 
-    letter-spacing: 1px; 
+    border-radius: 8px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 700;
     color: #fdba74;
   }
-  .hud-badge .num { 
-    font-size: 17px; 
-    font-weight: 800; 
-    color: #ffffff;
+  .hud-stats-group span {
     font-variant-numeric: tabular-nums;
   }
-  .hud-badge.load-badge .num { color: #f59e0b; }
-  .hud-badge.beam-badge .num { color: #fb923c; }
-  .hud-badge.cost-badge .num { color: #34d399; }
+  .hud-stats-group .val-amber { color: #f59e0b; }
+  .hud-stats-group .val-orange { color: #fb923c; }
+  .hud-stats-group .val-green { color: #34d399; }
+  .hud-stats-group .val-white { color: #ffffff; }
+  .hud-stats-group .divider { color: rgba(251, 146, 60, 0.28); }
 
-  .actions-right { display: flex; gap: 8px; flex-wrap: wrap; }
+  .actions-right {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  #guide-modal-box, .guide-content { touch-action: pan-y; }
+  #game-svg { touch-action: none; }
   button {
     font-family: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 7px 12px;
-    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    min-height: 30px;
+    border-radius: 7px;
     border: 1px solid rgba(251, 146, 60, 0.25);
-    background: rgba(255, 240, 230, 0.06);
+    background: rgba(255, 240, 230, 0.08);
     backdrop-filter: blur(10px);
     color: #fed7aa;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-  }
-  button:hover { 
-    background: rgba(251, 146, 60, 0.16);
-    border-color: rgba(251, 146, 60, 0.45);
-    color: #ffffff;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    justify-content: center;
+    gap: 3px;
+    touch-action: manipulation;
+    white-space: nowrap;
   }
   button:active { transform: translateY(1px); }
 
@@ -92,25 +120,18 @@
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
     border: 1px solid rgba(251, 191, 36, 0.5);
     color: #ffffff;
-    box-shadow: 0 0 16px rgba(217, 119, 6, 0.4);
-  }
-  .btn-test:hover { 
-    background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
-    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+    box-shadow: 0 0 10px rgba(217, 119, 6, 0.35);
+    padding: 4px 10px;
   }
   .btn-test.running { 
     background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
     border-color: rgba(251, 146, 60, 0.5);
-    box-shadow: 0 0 16px rgba(194, 65, 12, 0.45);
+    box-shadow: 0 0 10px rgba(194, 65, 12, 0.45);
   }
   .btn-danger { 
-    background: rgba(239, 68, 68, 0.14);
+    background: rgba(239, 68, 68, 0.16);
     border-color: rgba(239, 68, 68, 0.35);
     color: #fca5a5;
-  }
-  .btn-danger:hover {
-    background: rgba(239, 68, 68, 0.28);
-    border-color: rgba(239, 68, 68, 0.55);
   }
 
   .sandbox-panel {
@@ -118,60 +139,63 @@
     max-width: 1340px;
     background: rgba(41, 21, 13, 0.85);
     border: 1px solid rgba(251, 146, 60, 0.22);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(16px);
-    border-radius: 12px;
-    padding: 8px 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(14px);
+    border-radius: 8px;
+    padding: 3px 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-    gap: 10px;
-    font-size: 12.5px;
+    margin-bottom: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    font-size: 11px;
+    flex-shrink: 0;
   }
   .param-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     color: #fdba74;
-    font-weight: 600;
+    font-weight: 700;
+    white-space: nowrap;
   }
   .param-group select, .param-group input[type="range"] {
     background: rgba(24, 13, 9, 0.9);
-    border: 1px solid rgba(251, 146, 60, 0.3);
+    border: 1px solid rgba(251, 146, 60, 0.35);
     color: #ffedd5;
-    padding: 3px 6px;
-    border-radius: 6px;
+    padding: 2px 4px;
+    border-radius: 5px;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 10.5px;
     outline: none;
-    cursor: pointer;
   }
-  .param-group select:hover { border-color: #f59e0b; }
   .param-group input[type="range"] {
     accent-color: #f59e0b;
-    width: 100px;
+    width: 90px;
   }
 
-  /* 遊戲舞台與材料選擇器的並排主容器 */
+  /* 舞台與右側材料／工具按鈕橫向排版 */
   .game-main-container {
     width: 100%;
     max-width: 1340px;
+    flex: 1;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
-    gap: 16px;
+    gap: 6px;
+    min-height: 0;
   }
 
   #stage-wrapper {
     position: relative;
     flex: 1;
-    height: 615px;
-    border-radius: 16px;
+    height: 100%;
+    border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(251, 146, 60, 0.25);
-    box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.7);
     background: #180d09;
     transform: translate3d(0, 0, 0);
   }
@@ -182,22 +206,23 @@
     touch-action: none;
   }
 
-  /* 右側垂直懸浮泡泡材料選擇器（完全在峽谷舞台外側） */
+  /* 方案 B：三合一垂直懸浮泡泡材料與拆除工具欄 */
   .material-bubble-dock {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    justify-content: center;
+    gap: 8px;
     background: rgba(41, 21, 13, 0.88);
-    padding: 10px;
-    border-radius: 46px;
+    padding: 6px;
+    border-radius: 36px;
     border: 1.5px solid rgba(251, 146, 60, 0.35);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(16px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(14px);
     flex-shrink: 0;
   }
   .bubble-btn {
-    width: 76px;
-    height: 76px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     border: 2px solid rgba(255, 255, 255, 0.15);
     background: rgba(24, 13, 9, 0.9);
@@ -206,38 +231,41 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     color: #fed7aa;
     padding: 0;
     position: relative;
   }
   .bubble-btn .icon {
-    font-size: 26px;
+    font-size: 18px;
     line-height: 1;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
   .bubble-btn .label {
-    font-size: 11.5px;
+    font-size: 8.5px;
     font-weight: 800;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
   }
-  .bubble-btn:hover {
-    transform: scale(1.06);
-    background: rgba(251, 146, 60, 0.22);
-    border-color: rgba(251, 146, 60, 0.6);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-  }
-  .bubble-btn.active {
-    transform: scale(1.08);
-    background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
-    border-color: #fbbf24;
-    color: #ffffff;
-    box-shadow: 0 0 20px rgba(251, 191, 36, 0.7);
+  .bubble-btn:active {
+    transform: scale(0.92);
   }
   .bubble-btn.active.road-active {
     background: linear-gradient(135deg, #475569 0%, #334155 100%);
     border-color: #cbd5e1;
-    box-shadow: 0 0 20px rgba(203, 213, 225, 0.7);
+    color: #ffffff;
+    box-shadow: 0 0 14px rgba(203, 213, 225, 0.65);
+  }
+  .bubble-btn.active.truss-active {
+    background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+    border-color: #fbbf24;
+    color: #ffffff;
+    box-shadow: 0 0 14px rgba(251, 191, 36, 0.65);
+  }
+  .bubble-btn.active.erase-active {
+    background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+    border-color: #f87171;
+    color: #ffffff;
+    box-shadow: 0 0 14px rgba(248, 113, 113, 0.65);
   }
 
   @keyframes snapPulse {
@@ -252,20 +280,20 @@
 
   #status-bubble {
     position: absolute;
-    top: 16px;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 8px 20px;
-    border-radius: 10px;
-    font-size: 13.5px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 11.5px;
     font-weight: 700;
     display: none;
     z-index: 15;
     border: 1px solid rgba(251, 191, 36, 0.45);
     background: rgba(41, 21, 13, 0.95);
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(14px);
     color: #fbbf24;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
     text-align: center;
     max-width: 90%;
   }
@@ -283,52 +311,50 @@
     border: 1px solid rgba(251, 146, 60, 0.35);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(20px);
-    border-radius: 18px;
-    padding: 24px 32px;
+    border-radius: 16px;
+    padding: 16px 22px;
     display: none;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     z-index: 40;
     text-align: center;
-    max-width: 440px;
+    max-width: 380px;
   }
-  #confirm-dialog h3 { font-size: 19px; font-weight: 800; color: #ffedd5; }
-  #confirm-dialog p { font-size: 13px; color: #fdba74; line-height: 1.5; }
-  .dialog-buttons { display: flex; gap: 10px; margin-top: 4px; }
-  .btn-confirm-yes { background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%); color: #ffffff; padding: 7px 16px; border-radius: 8px; }
-  .btn-confirm-no { background: rgba(255, 240, 230, 0.08); color: #fed7aa; padding: 7px 14px; border-radius: 8px; }
+  #confirm-dialog h3 { font-size: 17px; font-weight: 800; color: #ffedd5; }
+  #confirm-dialog p { font-size: 12px; color: #fdba74; line-height: 1.4; }
+  .dialog-buttons { display: flex; gap: 8px; margin-top: 4px; }
+  .btn-confirm-yes { background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%); color: #ffffff; padding: 6px 14px; border-radius: 7px; font-size: 12px; }
+  .btn-confirm-no { background: rgba(255, 240, 230, 0.08); color: #fed7aa; padding: 6px 12px; border-radius: 7px; font-size: 12px; }
 
-  /* 說明與指南全螢幕遮罩彈窗 */
   #guide-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(15, 7, 4, 0.78);
+    background: rgba(15, 7, 4, 0.82);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     z-index: 100;
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 12px;
   }
   #guide-modal-box {
     width: 100%;
-    max-width: 680px;
-    max-height: 90vh;
+    max-width: 580px;
+    max-height: 88vh;
     background: rgba(36, 18, 11, 0.96);
     border: 1.5px solid rgba(251, 146, 60, 0.4);
-    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
-    border-radius: 20px;
-    padding: 24px 28px;
+    box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.9);
+    border-radius: 16px;
+    padding: 16px 20px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    position: relative;
+    gap: 12px;
     color: #ffedd5;
   }
   .guide-header {
@@ -336,244 +362,189 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid rgba(251, 146, 60, 0.25);
-    padding-bottom: 12px;
+    padding-bottom: 8px;
   }
   .guide-header h2 {
-    font-size: 21px;
+    font-size: 17px;
     font-weight: 800;
     color: #fed7aa;
-    display: flex;
-    align-items: center;
-    gap: 8px;
   }
   .btn-close-modal {
     background: transparent;
     border: none;
-    font-size: 22px;
+    font-size: 20px;
     color: #fdba74;
     cursor: pointer;
-    padding: 4px 8px;
-    line-height: 1;
-  }
-  .btn-close-modal:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.08);
   }
   .guide-content {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    font-size: 13.5px;
-    line-height: 1.6;
+    gap: 10px;
+    font-size: 12px;
+    line-height: 1.5;
     color: #fed7aa;
   }
   .guide-section {
     background: rgba(24, 13, 9, 0.6);
     border: 1px solid rgba(251, 146, 60, 0.2);
-    border-radius: 12px;
-    padding: 12px 16px;
+    border-radius: 10px;
+    padding: 10px 12px;
   }
   .guide-section h4 {
-    font-size: 14.5px;
+    font-size: 13px;
     font-weight: 800;
     color: #fbbf24;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    margin-bottom: 4px;
   }
   .guide-section ul {
-    margin-left: 18px;
+    margin-left: 16px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
   }
-  .guide-section strong {
-    color: #ffffff;
-  }
+  .guide-section strong { color: #ffffff; }
   .btn-modal-start {
     align-self: center;
-    padding: 10px 32px;
-    font-size: 15px;
+    padding: 8px 26px;
+    font-size: 13px;
     font-weight: 800;
-    border-radius: 10px;
+    border-radius: 8px;
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
     border: 1px solid rgba(251, 191, 36, 0.5);
     color: #ffffff;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.4);
-    transition: all 0.2s ease;
-  }
-  .btn-modal-start:hover {
-    background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
-    box-shadow: 0 6px 20px rgba(251, 191, 36, 0.6);
-    transform: translateY(-1px);
-  }
-
-  .tip-footer {
-    margin-top: 8px;
-    font-size: 12px;
-    font-weight: 500;
-    color: #a8715a;
-    display: flex;
-    gap: 18px;
-    flex-wrap: wrap;
-    justify-content: center;
   }
 </style>
 </head>
 <body>
 
-<div class="top-hud">
-  <div class="badges-left">
-    <div class="hud-badge load-badge">
-      <span class="title">LOAD</span>
-      <span class="num" id="ui-weight">2.5 t</span>
+<div id="app-container">
+  <div class="top-hud">
+    <div class="hud-stats-group">
+      <span>載重: <span class="val-amber" id="ui-weight">2.5t</span></span>
+      <span class="divider">|</span>
+      <span>桿件: <span class="val-orange" id="ui-lines">0</span></span>
+      <span class="divider">|</span>
+      <span>造價: <span class="val-green" id="ui-cost">$0</span></span>
+      <span class="divider">|</span>
+      <span>網格: <span class="val-white" id="ui-grid-desc">5x9</span></span>
     </div>
-    <div class="hud-badge beam-badge">
-      <span class="title">BEAMS</span>
-      <span class="num" id="ui-lines">0</span>
-    </div>
-    <div class="hud-badge cost-badge">
-      <span class="title">COST</span>
-      <span class="num" id="ui-cost">$0</span>
-    </div>
-    <div class="hud-badge">
-      <span class="title">GRID</span>
-      <span class="num" id="ui-grid-desc">5x9</span>
-    </div>
-  </div>
-  <div class="actions-right">
-    <button id="btn-guide-open" style="color: #6ee7b7; border-color: rgba(52, 211, 153, 0.45);">📖 模式指南</button>
-    <button id="btn-toggle-audio">🔊 音效開</button>
-    <a href="index.html" style="text-decoration: none;"><button>首頁</button></a>
-    <button id="btn-share" style="color: #fbbf24; border-color: rgba(251, 191, 36, 0.45);">🔗 複製分享連結</button>
-    <button class="btn-danger" id="btn-clear">清空橋樑</button>
-    <button class="btn-test" id="btn-test">踩油門出發</button>
-  </div>
-</div>
 
-<div class="sandbox-panel">
-  <div class="param-group">
-    <label>垂直層數：</label>
-    <select id="cfg-rows">
-      <option value="3">3 層</option>
-      <option value="4">4 層</option>
-      <option value="5" selected>5 層 (標準)</option>
-      <option value="6">6 層</option>
-      <option value="7">7 層 (高塔)</option>
-    </select>
+    <div class="actions-right">
+      <button id="btn-guide-open">📖 指南</button>
+      <button id="btn-toggle-audio">🔊</button>
+      <button type="button" onclick="location.href='index.html'">首頁</button>
+      <button id="btn-share">🔗 分享</button>
+      <button class="btn-danger" id="btn-clear">清空</button>
+      <button class="btn-test" id="btn-test">出發</button>
+    </div>
   </div>
-  <div class="param-group">
-    <label>水平柱數：</label>
-    <select id="cfg-cols">
-      <option value="5">5 柱 (小跨)</option>
-      <option value="7">7 柱</option>
-      <option value="9" selected>9 柱 (標準)</option>
-      <option value="11">11 柱</option>
-      <option value="13">13 柱 (長跨)</option>
-      <option value="15">15 柱 (極限)</option>
-    </select>
-  </div>
-  <div class="param-group">
-    <label>左岸起點：</label>
-    <select id="cfg-start-row"></select>
-  </div>
-  <div class="param-group">
-    <label>右岸終點：</label>
-    <select id="cfg-end-row"></select>
-  </div>
-  <div class="param-group">
-    <label>載重：<span id="lbl-weight" style="color: #f59e0b;">2.5t</span></label>
-    <input type="range" id="cfg-weight" min="0.5" max="25" step="0.5" value="2.5">
-  </div>
-</div>
 
-<!-- 主內容容器：將峽谷畫布與右側材料面板橫向並列 -->
-<div class="game-main-container">
-  <div id="stage-wrapper">
-    <svg id="game-svg" viewBox="0 0 900 460" preserveAspectRatio="xMidYMid meet"></svg>
-    <div id="status-bubble"></div>
+  <div class="sandbox-panel">
+    <div class="param-group">
+      <label>層數:</label>
+      <select id="cfg-rows">
+        <option value="3">3層</option>
+        <option value="4">4層</option>
+        <option value="5" selected>5層</option>
+        <option value="6">6層</option>
+        <option value="7">7層</option>
+      </select>
+    </div>
+    <div class="param-group">
+      <label>柱數:</label>
+      <select id="cfg-cols">
+        <option value="5">5柱</option>
+        <option value="7">7柱</option>
+        <option value="9" selected>9柱</option>
+        <option value="11">11柱</option>
+        <option value="13">13柱</option>
+        <option value="15">15柱</option>
+      </select>
+    </div>
+    <div class="param-group">
+      <label>起點:</label>
+      <select id="cfg-start-row"></select>
+    </div>
+    <div class="param-group">
+      <label>終點:</label>
+      <select id="cfg-end-row"></select>
+    </div>
+    <div class="param-group">
+      <label>載重:<span id="lbl-weight" style="color: #f59e0b;">2.5t</span></label>
+      <input type="range" id="cfg-weight" min="0.5" max="25" step="0.5" value="2.5">
+    </div>
+  </div>
 
-    <div id="confirm-dialog">
-      <h3>重構地形確認</h3>
-      <p>調整網格層數或柱數將清空當前搭建的梁柱構件。確定要繼續嗎？</p>
-      <div class="dialog-buttons">
-        <button class="btn-confirm-yes" id="btn-conf-yes">確認重置</button>
-        <button class="btn-confirm-no" id="btn-conf-no">保留目前橋樑</button>
+  <div class="game-main-container">
+    <div id="stage-wrapper">
+      <svg id="game-svg" viewBox="0 0 900 460" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="status-bubble"></div>
+
+      <div id="confirm-dialog">
+        <h3>重構地形確認</h3>
+        <p>調整網格層數或柱數將清空當前搭建的梁柱構件。確定要繼續嗎？</p>
+        <div class="dialog-buttons">
+          <button class="btn-confirm-yes" id="btn-conf-yes">確認重置</button>
+          <button class="btn-confirm-no" id="btn-conf-no">保留橋樑</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- 材料選擇器：獨立置於右側，絕不遮擋任何端點錨點 -->
-  <div class="material-bubble-dock">
-    <button class="bubble-btn active road-active" id="btn-bubble-road" title="切換為橋面材 (快速鍵: 1)">
-      <span class="icon">🚗</span>
-      <span class="label">橋面材</span>
-    </button>
-    <button class="bubble-btn" id="btn-bubble-truss" title="切換為支撐材 (快速鍵: 2)">
-      <span class="icon">🏗️</span>
-      <span class="label">支撐材</span>
-    </button>
+    <!-- 方案 B：三合一垂直懸浮泡泡欄（路面材、桁架支撐、拆除工具） -->
+    <div class="material-bubble-dock">
+      <button class="bubble-btn active road-active" id="btn-tool-road" title="橋面材 ($200)">
+        <span class="icon">🚗</span>
+        <span class="label">橋面</span>
+      </button>
+      <button class="bubble-btn" id="btn-tool-truss" title="支撐材 ($100)">
+        <span class="icon">🏗️</span>
+        <span class="label">支撐</span>
+      </button>
+      <button class="bubble-btn" id="btn-tool-erase" title="滑動拆除桿件">
+        <span class="icon">🧹</span>
+        <span class="label">拆除</span>
+      </button>
+    </div>
   </div>
 </div>
 
-<div class="tip-footer">
-  <span>操作提示：【滑鼠左鍵】拖曳連續造橋；【滑鼠右鍵】滑過快速拆除；畫過已有桿件可【直接覆蓋換材質】。</span>
-  <span>造價說明：灰色橋面材每根 $200，褐色桁架骨架每根 $100，水中基柱每座 $500。</span>
-</div>
-
-<!-- 模式說明與特徵展示彈窗 -->
+<!-- 模式說明彈窗 -->
 <div id="guide-modal-overlay">
   <div id="guide-modal-box">
     <div class="guide-header">
-      <h2>🛠️ 創客沙盒模式指南 (Maker Sandbox)</h2>
-      <button class="btn-close-modal" id="btn-guide-close" title="關閉視窗 (ESC)">&times;</button>
+      <h2>🛠️ 創客沙盒模式操作指南</h2>
+      <button class="btn-close-modal" id="btn-guide-close">&times;</button>
     </div>
     <div class="guide-content">
       <div class="guide-section">
-        <h4>🎯 模式定位與核心差異（相較經典模式）</h4>
+        <h4>🎯 手機觸控操作特色</h4>
         <ul>
-          <li><strong>無預算與構件上限限制</strong>：捨棄關卡模式的固定預算束縛，您可以隨意揮灑靈感搭建超大型複雜桁架或懸索橋。</li>
-          <li><strong>參數自由定義世界</strong>：可自由設定垂直 3~7 層、水平 5~15 柱跨距、發車與抵達高程，以及高達 25.0t 的重載卡車。</li>
-          <li><strong>水中基柱自由開闢</strong>：直接【點擊最底層任一中間節點】，即可升起固定石柱基底作為中繼支撐。</li>
+          <li><strong>🚗 橋面材</strong>：手指連續滑動建立供卡車行駛之路面。</li>
+          <li><strong>🏗️ 支撐材</strong>：滑動建立內部幾何三角形受力骨架。</li>
+          <li><strong>🧹 拆除模式</strong>：切換至掃把按鈕後，手指滑過即可秒拆桿件。</li>
+          <li><strong>🏛️ 水中基柱</strong>：點擊最底層任一中間節點，即可升起或移除基柱。</li>
         </ul>
       </div>
-
       <div class="guide-section">
-        <h4>🧱 材料系統、基柱與動態造價</h4>
+        <h4>🧱 材料造價</h4>
         <ul>
-          <li><strong>🚗 橋面材 (Road) ｜ 單價 $200</strong>：柏油灰色粗線，為<strong>卡車專屬行駛動線</strong>。幾何限制僅允許水平與 45° 斜坡（排除垂直攀爬）。</li>
-          <li><strong>🏗️ 支撐材 (Truss) ｜ 單價 $100</strong>：褐色鋼構細線，為內部桁架骨架。支援水平、垂直與 45° 任何方向連線，不干擾車輛行駛。</li>
-          <li><strong>🏛️ 水中基柱 (Pillar) ｜ 每座 $500</strong>：點擊最底層中間節點可升起堅固的水中固定錨點，每座建造成本為 $500。</li>
-          <li><strong>直接覆蓋機制</strong>：手持當前材料直接劃過已有線段，可即時變更材質，無需先刪除。</li>
-          <li><strong>動態成本顯示</strong>：頂部 COST 看板即時結算總花費（含橋面、桁架與基柱），協助評估結構經濟效益。</li>
+          <li>灰色橋面材每根 $200，褐色桁架骨架每根 $100，水中基柱每座 $500。</li>
         </ul>
       </div>
-
       <div class="guide-section">
-        <h4>🔬 真實物理模擬引擎特色</h4>
+        <h4>🔬 物理模擬</h4>
         <ul>
-          <li><strong>位置式動力學（Verlet＋XPBD）</strong>：以簡化的桿件模型即時模擬受拉斷裂與受壓挫屈，並依應力變色提示結構弱點。</li>
-          <li><strong>動態相對下陷極限</strong>：採用相較於未受力初始高度的相對變形判定，深淵低層發車也能平穩通過。</li>
-          <li><strong>慣性與斜坡力學</strong>：卡車依據真實重力坡度進行加速、剎車阻力與極限翻覆模擬；支援跳台飛車特技。</li>
-        </ul>
-      </div>
-
-      <div class="guide-section">
-        <h4>🎮 快捷鍵指南</h4>
-        <ul>
-          <li><strong>數字鍵 1 / 2</strong>：即時切換【橋面材】與【支撐材】。</li>
-          <li><strong>滑鼠左鍵</strong>：錨點拖曳連續繪製構件；<strong>滑鼠右鍵</strong>：按住滑過快速拆除。</li>
-          <li><strong>ESC 鍵</strong>：快速關閉此指南視窗。</li>
+          <li><strong>位置式動力學（Verlet＋XPBD）</strong>：以簡化的桿件模型模擬受拉斷裂與受壓挫屈，桿件依應力變色提示弱點。</li>
         </ul>
       </div>
     </div>
-    <button class="btn-modal-start" id="btn-guide-start">進入沙盒開始建造</button>
+    <button class="btn-modal-start" id="btn-guide-start">開始建造</button>
   </div>
 </div>
 
-<script src="physics-core.js?v=1"></script>
+<script src="config.js?v=1"></script>
+<script src="physics-core.js?v=2"></script>
 <script>
 class ProceduralAudioEngine {
   constructor() {
@@ -796,7 +767,6 @@ const MAX_SPRINT_SPEED = 230;
 
 const SNAP_COOLDOWN_TICKS = 8;
 
-// 顏色標準定義：橋面材（瀝青柏油灰）、支撐材（結構暖褐鋼）
 const COLOR_ROAD = "#64748b";
 const COLOR_TRUSS = "#8c4424";
 
@@ -830,12 +800,16 @@ class MakerSandboxApp {
       pillars: []
     };
 
-    this.activeMaterial = "road";
+    this.activeMaterial = "road"; // "road" 或 "truss"
+    this.activeMobileTool = "road"; // "road" | "truss" | "erase"
 
     this.pendingConfigChange = null;
     this.operationalState = "edit";
     this.isErasing = false;
     this.lastErasePt = null;
+    this.activePointerId = null;
+    this.pendingPillarCol = null;
+    this.eraseTouched = false;
     this.dragPathNodeIds = [];
 
     this.nodes = new Map();
@@ -912,19 +886,32 @@ class MakerSandboxApp {
     this.vehicleLayer = document.getElementById("layer-vehicle");
   }
 
-  setMaterial(mat) {
-    this.activeMaterial = mat;
-    const btnRoad = document.getElementById("btn-bubble-road");
-    const btnTruss = document.getElementById("btn-bubble-truss");
+  setMobileTool(tool) {
+    this.activeMobileTool = tool;
+    this.isErasing = false;
+    this.lastErasePt = null;
+    this.cancelDragPreview();
 
-    if (mat === "road") {
+    const btnRoad = document.getElementById("btn-tool-road");
+    const btnTruss = document.getElementById("btn-tool-truss");
+    const btnErase = document.getElementById("btn-tool-erase");
+
+    btnRoad.classList.remove("active", "road-active");
+    btnTruss.classList.remove("active", "truss-active");
+    btnErase.classList.remove("active", "erase-active");
+
+    if (tool === "road") {
+      this.activeMaterial = "road";
       btnRoad.classList.add("active", "road-active");
-      btnTruss.classList.remove("active");
-    } else {
-      btnTruss.classList.add("active");
-      btnRoad.classList.remove("active", "road-active");
+      this.notifyStatus("已切換為【🚗 灰色橋面材】 ($200)", false);
+    } else if (tool === "truss") {
+      this.activeMaterial = "truss";
+      btnTruss.classList.add("active", "truss-active");
+      this.notifyStatus("已切換為【🏗️ 褐色支撐材】 ($100)", false);
+    } else if (tool === "erase") {
+      btnErase.classList.add("active", "erase-active");
+      this.notifyStatus("已切換為【🧹 拆除模式】：滑動觸控即可拆除桿件", false);
     }
-    this.notifyStatus(`已切換為【${mat === 'road' ? '🚗 灰色橋面材 ($200)' : '🏗️ 褐色支撐材 ($100)'}】 (按鍵: ${mat === 'road' ? '1' : '2'})`, false);
   }
 
   populateElevationSelectors() {
@@ -941,13 +928,13 @@ class MakerSandboxApp {
     for (let r = 0; r < rows; r++) {
       const optS = document.createElement("option");
       optS.value = r;
-      optS.textContent = `第 ${r + 1} 層 (高程 ${r})`;
+      optS.textContent = `${r + 1}層`;
       if (r === curS) optS.selected = true;
       selStart.appendChild(optS);
 
       const optE = document.createElement("option");
       optE.value = r;
-      optE.textContent = `第 ${r + 1} 層 (高程 ${r})`;
+      optE.textContent = `${r + 1}層`;
       if (r === curE) optE.selected = true;
       selEnd.appendChild(optE);
     }
@@ -1030,8 +1017,8 @@ class MakerSandboxApp {
               stroke: "#fef3c7", "stroke-width": 2
             })
           : createSvgElement("circle", {
-              cx: px, cy: py, r: 6,
-              fill: "#ffedd5", stroke: "#29150d", "stroke-width": 1.6
+              cx: px, cy: py, r: 6.5,
+              fill: "#ffedd5", stroke: "#29150d", "stroke-width": 1.8
             });
 
         el.style.cursor = isBottomRow ? "pointer" : "default";
@@ -1115,8 +1102,8 @@ class MakerSandboxApp {
             fill: "#d97706", stroke: "#fef3c7", "stroke-width": 2
           })
         : createSvgElement("circle", {
-            cx: targetNode.x, cy: targetNode.y, r: 6,
-            fill: "#ffedd5", stroke: "#29150d", "stroke-width": 1.6
+            cx: targetNode.x, cy: targetNode.y, r: 6.5,
+            fill: "#ffedd5", stroke: "#29150d", "stroke-width": 1.8
           });
       el.style.cursor = "pointer";
       el.dataset.nodeId = targetNode.id;
@@ -1140,7 +1127,6 @@ class MakerSandboxApp {
     if (dc > 1 || dr > 1) return;
 
     const targetType = explicitType || this.activeMaterial;
-
     if (targetType === "road" && dc === 0) return;
 
     const span = euclideanDistance(n1, n2);
@@ -1266,7 +1252,7 @@ class MakerSandboxApp {
 
       const isChosen = dragPathSet.has(n.id);
       n.element.setAttribute("fill", isChosen ? "#fbbf24" : "#ffedd5");
-      n.element.setAttribute("r", isChosen ? 7.5 : 6);
+      n.element.setAttribute("r", isChosen ? 8.5 : 6.5);
     }
   }
 
@@ -1277,12 +1263,11 @@ class MakerSandboxApp {
   }
 
   syncDashboard() {
-    document.getElementById("ui-weight").textContent = `${this.config.weight.toFixed(1)} t`;
+    document.getElementById("ui-weight").textContent = `${this.config.weight.toFixed(1)}t`;
     document.getElementById("ui-lines").textContent = `${this.members.size}`;
     document.getElementById("ui-grid-desc").textContent = `${this.config.rowCount}x${this.config.colCount}`;
-    document.getElementById("lbl-weight").textContent = `${this.config.weight.toFixed(1)} t`;
+    document.getElementById("lbl-weight").textContent = `${this.config.weight.toFixed(1)}t`;
 
-    // 計算總造價：橋面材 $200，支撐材 $100，水中基柱每座 $500
     let totalCost = 0;
     for (const m of this.members.values()) {
       totalCost += (m.isRoad ? 200 : 100);
@@ -1296,17 +1281,17 @@ class MakerSandboxApp {
 
     const btn = document.getElementById("btn-test");
     if (this.operationalState === "edit") {
-      btn.textContent = "踩油門出發";
+      btn.textContent = "出發";
       btn.classList.remove("running");
     } else {
-      btn.textContent = "進站調整";
+      btn.textContent = "調整";
       btn.classList.add("running");
     }
   }
 
   syncAudioButton() {
     const btn = document.getElementById("btn-toggle-audio");
-    if (btn) btn.textContent = this.audio.muted ? "🔇 靜音" : "🔊 音效開";
+    if (btn) btn.textContent = this.audio.muted ? "🔇" : "🔊";
   }
 
   notifyStatus(text, isDanger = false) {
@@ -1335,11 +1320,15 @@ class MakerSandboxApp {
     const hashStr = encodeURIComponent(btoa(jsonStr));
     const fullUrl = `${window.location.origin}${window.location.pathname}#d=${hashStr}`;
 
+    if (navigator.share) {
+      navigator.share({ title: "創客沙盒橋樑", url: fullUrl }).catch(() => {});
+      return;
+    }
     navigator.clipboard.writeText(fullUrl).then(() => {
-      this.notifyStatus("沙盒網址已複製至剪貼簿！包含雙材料配置");
+      this.notifyStatus("沙盒網址已複製至剪貼簿！");
     }).catch(() => {
       window.location.hash = `d=${hashStr}`;
-      this.notifyStatus("請手動複製網址列的最新網址");
+      this.notifyStatus("請手動複製網址列");
     });
   }
 
@@ -1384,7 +1373,7 @@ class MakerSandboxApp {
           const id2 = `${parts[3]}_${parts[4]}_${parts[5]}`;
           this.connectNodes(id1, id2, type);
         });
-        this.notifyStatus("已精準還原創客沙盒關卡與雙材料結構！");
+        this.notifyStatus("已精準還原沙盒設定與結構！");
         return true;
       }
     } catch (e) {
@@ -1458,7 +1447,8 @@ class MakerSandboxApp {
   }
 
   launchSimulation() {
-   fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=sandbox_launch", { mode: "no-cors" }).catch(() => {});
+    window.BridgeConfig && window.BridgeConfig.trackHit("sandbox_mobile_launch");
+
     this.operationalState = "simulate";
     this.cancelDragPreview();
     this.dismissStatus();
@@ -1752,6 +1742,19 @@ class MakerSandboxApp {
     }
   }
 
+  findNearestNode(pt, maxDist = 42) {
+    let nearest = null;
+    let minD = maxDist;
+    for (const n of this.nodes.values()) {
+      const d = Math.hypot(n.x - pt.x, n.y - pt.y);
+      if (d < minD) {
+        minD = d;
+        nearest = n;
+      }
+    }
+    return nearest;
+  }
+
   bindEvents() {
     const guideOverlay = document.getElementById("guide-modal-overlay");
     const openGuide = () => { guideOverlay.style.display = "flex"; };
@@ -1765,18 +1768,9 @@ class MakerSandboxApp {
       if (e.target === guideOverlay) closeGuide();
     });
 
-    document.getElementById("btn-bubble-road").addEventListener("click", () => this.setMaterial("road"));
-    document.getElementById("btn-bubble-truss").addEventListener("click", () => this.setMaterial("truss"));
-
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeGuide();
-      } else if (e.key === "1") {
-        this.setMaterial("road");
-      } else if (e.key === "2") {
-        this.setMaterial("truss");
-      }
-    });
+    document.getElementById("btn-tool-road").addEventListener("click", () => this.setMobileTool("road"));
+    document.getElementById("btn-tool-truss").addEventListener("click", () => this.setMobileTool("truss"));
+    document.getElementById("btn-tool-erase").addEventListener("click", () => this.setMobileTool("erase"));
 
     document.getElementById("cfg-rows").addEventListener("change", (e) => {
       const val = parseInt(e.target.value, 10);
@@ -1843,52 +1837,67 @@ class MakerSandboxApp {
 
     this.svg.addEventListener("pointerdown", (e) => {
       if (this.operationalState !== "edit") return;
+      if (this.activePointerId !== null) return;
+      this.activePointerId = e.pointerId;
+      try { this.svg.setPointerCapture(e.pointerId); } catch (err) {}
+      this.pendingPillarCol = null;
+      this.pendingPillarStart = null;
+      this.eraseTouched = false;
 
       const pt = this.getSvgCoordinates(e);
+      const isRightClick = (e.button === 2);
+      const isEraseModeActive = (this.activeMobileTool === "erase" || isRightClick);
+
       const targetLinkId = e.target?.dataset?.linkId;
       const targetNodeId = e.target?.dataset?.nodeId;
 
-      if (e.button === 2) {
-        this.isErasing = true;
-        this.lastErasePt = pt;
-        if (targetLinkId) this.disconnectMember(targetLinkId);
+      // 檢查是否點擊底層基柱節點（優先判定，拆除模式下點擊亦可切換基柱）
+      let clickedPillarNode = null;
+      if (targetNodeId) {
+        const n = this.nodes.get(targetNodeId);
+        if (n && n.row === this.config.rowCount - 1 && n.col > 0 && n.col < this.config.colCount - 1) {
+          clickedPillarNode = n;
+        }
+      }
+      if (!clickedPillarNode) {
+        const nearest = this.findNearestNode(pt, 36);
+        if (nearest && nearest.row === this.config.rowCount - 1 && nearest.col > 0 && nearest.col < this.config.colCount - 1) {
+          clickedPillarNode = nearest;
+        }
+      }
+
+      if (clickedPillarNode) {
+        this.pendingPillarCol = clickedPillarNode.col;
+        this.pendingPillarStart = pt;
+        if (isEraseModeActive) {
+          this.isErasing = true;
+          this.lastErasePt = pt;
+        } else {
+          this.dragPathNodeIds = [clickedPillarNode.id];
+          this.renderNodesVisual();
+        }
         return;
       }
 
+      // 拆除模式（僅拆桿件）
+      if (isEraseModeActive) {
+        this.isErasing = true;
+        this.lastErasePt = pt;
+        if (targetLinkId) { this.disconnectMember(targetLinkId); this.eraseTouched = true; }
+        return;
+      }
+
+      // 正常繪製建造模式
       if (e.button === 0) {
         if (targetLinkId) {
           const m = this.members.get(targetLinkId);
-          if (m) {
-            this.connectNodes(m.n1, m.n2, this.activeMaterial);
-          }
+          if (m) this.connectNodes(m.n1, m.n2, this.activeMaterial);
           return;
         }
 
-        if (targetNodeId) {
-          const clickedNode = this.nodes.get(targetNodeId);
-          if (clickedNode && clickedNode.row === this.config.rowCount - 1 &&
-              clickedNode.col > 0 && clickedNode.col < this.config.colCount - 1) {
-            this.togglePillarAt(clickedNode.col);
-            return;
-          }
-          this.dragPathNodeIds = [targetNodeId];
-          this.renderNodesVisual();
-          return;
-        }
-
-        let nearest = null;
-        let minD = 36;
-        for (const n of this.nodes.values()) {
-          const d = Math.hypot(n.x - pt.x, n.y - pt.y);
-          if (d < minD) { minD = d; nearest = n; }
-        }
-        if (nearest) {
-          if (nearest.row === this.config.rowCount - 1 &&
-              nearest.col > 0 && nearest.col < this.config.colCount - 1) {
-            this.togglePillarAt(nearest.col);
-            return;
-          }
-          this.dragPathNodeIds = [nearest.id];
+        const startNode = targetNodeId ? this.nodes.get(targetNodeId) : this.findNearestNode(pt, 40);
+        if (startNode) {
+          this.dragPathNodeIds = [startNode.id];
           this.renderNodesVisual();
           return;
         }
@@ -1899,7 +1908,12 @@ class MakerSandboxApp {
 
     this.svg.addEventListener("pointermove", (e) => {
       if (this.operationalState !== "edit") return;
+      if (e.pointerId !== this.activePointerId) return;
       const pt = this.getSvgCoordinates(e);
+      if (this.pendingPillarCol !== null && this.pendingPillarStart &&
+          Math.hypot(pt.x - this.pendingPillarStart.x, pt.y - this.pendingPillarStart.y) > 16) {
+        this.pendingPillarCol = null;
+      }
 
       if (this.isErasing) {
         if (this.lastErasePt) {
@@ -1914,9 +1928,10 @@ class MakerSandboxApp {
             }
           }
           for (const k of toDelete) this.disconnectMember(k);
+        if (toDelete.length) this.eraseTouched = true;
         }
         const hovered = document.elementFromPoint(e.clientX, e.clientY);
-        if (hovered?.dataset?.linkId) this.disconnectMember(hovered.dataset.linkId);
+        if (hovered?.dataset?.linkId) { this.disconnectMember(hovered.dataset.linkId); this.eraseTouched = true; }
         this.lastErasePt = pt;
         return;
       }
@@ -1951,7 +1966,7 @@ class MakerSandboxApp {
         const isDiag = (dc === 1 && dr === 1);
         const distToCursor = Math.hypot(n.x - pt.x, n.y - pt.y);
 
-        const maxAllowedRadius = isDiag ? 42 : (isIntentionalDiagonal ? 16 : 28);
+        const maxAllowedRadius = isDiag ? 44 : (isIntentionalDiagonal ? 20 : 36);
         if (distToCursor > maxAllowedRadius) continue;
 
         const score = distToCursor * (isDiag ? 0.75 : (isIntentionalDiagonal ? 2.5 : 1.0));
@@ -1984,7 +1999,7 @@ class MakerSandboxApp {
         const nB = this.nodes.get(this.dragPathNodeIds[i + 1]);
         const seg = createSvgElement("line", {
           x1: nA.x, y1: nA.y, x2: nB.x, y2: nB.y,
-          stroke: previewStroke, "stroke-width": isRoadMat ? 5.5 : 3.5, "stroke-linecap": "round",
+          stroke: previewStroke, "stroke-width": isRoadMat ? 6 : 4, "stroke-linecap": "round",
           "stroke-dasharray": "6 6", opacity: "0.9"
         });
         seg.style.pointerEvents = "none";
@@ -1996,7 +2011,7 @@ class MakerSandboxApp {
       const tailSeg = createSvgElement("line", {
         x1: lastNode.x, y1: lastNode.y, x2: pt.x, y2: pt.y,
         stroke: isTailValid ? previewStroke : "#ef4444",
-        "stroke-width": isRoadMat ? 5.5 : 3.5, "stroke-linecap": "round",
+        "stroke-width": isRoadMat ? 6 : 4, "stroke-linecap": "round",
         "stroke-dasharray": "6 6", opacity: "0.9"
       });
       tailSeg.style.pointerEvents = "none";
@@ -2005,26 +2020,58 @@ class MakerSandboxApp {
       this.renderNodesVisual();
     });
 
-    window.addEventListener("pointerup", (e) => {
+    const finishPointer = (e, cancelled) => {
+      if (e && e.pointerId !== this.activePointerId) return;
+      this.activePointerId = null;
       if (this.operationalState !== "edit") return;
-      if (e.button === 2) {
-        this.isErasing = false;
-        this.lastErasePt = null;
-        return;
-      }
 
-      if (this.dragPathNodeIds.length > 1) {
-        for (let i = 0; i < this.dragPathNodeIds.length - 1; i++) {
-          this.connectNodes(this.dragPathNodeIds[i], this.dragPathNodeIds[i + 1]);
+      const wasDrawing = this.dragPathNodeIds.length > 1;
+      const tapPillar = this.pendingPillarCol !== null && !wasDrawing && !this.eraseTouched;
+      this.isErasing = false;
+      this.lastErasePt = null;
+
+      if (!cancelled) {
+        if (wasDrawing) {
+          for (let i = 0; i < this.dragPathNodeIds.length - 1; i++) {
+            this.connectNodes(this.dragPathNodeIds[i], this.dragPathNodeIds[i + 1]);
+          }
+        } else if (tapPillar) {
+          this.togglePillarAt(this.pendingPillarCol);
         }
       }
+      this.pendingPillarCol = null;
+      this.eraseTouched = false;
       this.cancelDragPreview();
-    });
+    };
+    window.addEventListener("pointerup", (e) => finishPointer(e, false));
+    window.addEventListener("pointercancel", (e) => finishPointer(e, true));
   }
 }
 
+function updateAppViewport() {
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const container = document.getElementById("app-container");
+  if (!container) return;
+
+  if (isPortrait) {
+    container.style.width = `${window.innerHeight}px`;
+    container.style.height = `${window.innerWidth}px`;
+    container.style.top = `calc(50% - ${window.innerWidth / 2}px)`;
+    container.style.left = `calc(50% - ${window.innerHeight / 2}px)`;
+  } else {
+    container.style.width = "100vw";
+    container.style.height = "100vh";
+    container.style.top = "0px";
+    container.style.left = "0px";
+  }
+}
+
+window.addEventListener("resize", updateAppViewport);
+window.addEventListener("orientationchange", updateAppViewport);
+
 window.onload = () => {
-  fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=sandbox_visit", { mode: "no-cors" }).catch(() => {});
+  window.BridgeConfig && window.BridgeConfig.trackHit("sandbox_mobile_visit");
+  updateAppViewport();
   const canvasSvg = document.getElementById("game-svg");
   new MakerSandboxApp(canvasSvg);
 };
