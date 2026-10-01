@@ -356,7 +356,8 @@
   </div>
 </div>
 
-<script src="physics-core.js?v=1"></script>
+<script src="config.js?v=1"></script>
+<script src="physics-core.js?v=2"></script>
 <script>
 class ProceduralAudioEngine {
   constructor() {
@@ -1127,7 +1128,7 @@ class CanyonBridgeApp {
 
   launchSimulation() {
    // 每次手機版點擊出發時自動累加一次
-fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=mobile_launch", { mode: "no-cors" }).catch(() => {});
+window.BridgeConfig && window.BridgeConfig.trackHit("mobile_launch");
     if (!this.isBridgeContinuityValid()) {
       this.notifyStatus("橋面尚未完全連通兩岸", true);
       setTimeout(() => this.updateTutorialGuidance(), 1600);
@@ -1656,7 +1657,7 @@ window.addEventListener("orientationchange", updateAppViewport);
 
 window.onload = () => {
   // 背景發送手機版造訪統計
-fetch("https://script.google.com/macros/s/AKfycbxaM_d8WTJHj-B8FSNiwODChDVw5C912tL4zJIxiVyexdSMeG7kDaUwuS1-u52d6hiiww/exec?action=hit&type=mobile_visit", { mode: "no-cors" }).catch(() => {});
+window.BridgeConfig && window.BridgeConfig.trackHit("mobile_visit");
   updateAppViewport();
   const canvasSvg = document.getElementById("game-svg");
   new CanyonBridgeApp(canvasSvg);
