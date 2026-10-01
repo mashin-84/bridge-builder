@@ -191,19 +191,45 @@
     border-color: rgba(56, 189, 248, 0.3);
     transform: translateY(-1px);
   }
-  .btn-launch.is-recommended {
-    outline: 2px solid #fbbf24;
-    outline-offset: 2px;
-  }
+  .btn-launch { position: relative; }
+  .btn-launch.is-recommended { outline: 2px solid #fbbf24; outline-offset: 2px; }
   .btn-launch.is-recommended::after {
-    content: " ✓ 建議";
-    font-size: 11px;
-    font-weight: 700;
-    color: #fde68a;
+    content: "建議";
+    position: absolute; top: -10px; right: 10px;
+    padding: 1px 8px; border-radius: 9px;
+    background: #fbbf24; color: #1e293b;
+    font-size: 10.5px; font-weight: 800; line-height: 1.5;
   }
+  body { overflow-x: hidden; }
+  .container { position: relative; z-index: 1; background: rgba(15, 23, 42, 0.66); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  #demo-bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.7; }
+  #demo-caption {
+    position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 2;
+    padding: 4px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
+    color: #cbd5e1; background: rgba(15, 23, 42, 0.78); border: 1px solid rgba(255,255,255,0.1);
+    pointer-events: none; white-space: nowrap;
+  }
+  .progress-strip {
+    margin: -8px 0 28px; padding: 16px 18px; text-align: left;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
+  }
+  .progress-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13.5px; font-weight: 700; margin-bottom: 10px; }
+  .progress-title { color: #f8fafc; }
+  #progress-summary { color: #fbbf24; font-weight: 600; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+    font-size: 12px; font-weight: 800; color: #64748b;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  }
+  .chip.done { color: #1e293b; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-color: #fde68a; }
+  .progress-note { margin-top: 10px; font-size: 11.5px; color: #64748b; }
 </style>
 </head>
 <body>
+
+<canvas id="demo-bg" aria-hidden="true"></canvas>
+<div id="demo-caption" aria-hidden="true"></div>
 
 <div class="container">
   <div class="badge">STEM 物理力學互動模擬</div>
@@ -246,11 +272,19 @@
     </div>
   </div>
 
+  <div class="progress-strip" id="progress-strip">
+    <div class="progress-head">
+      <span class="progress-title">🏅 你的經典挑戰進度</span>
+      <span id="progress-summary"></span>
+    </div>
+    <div class="chips" id="progress-chips"></div>
+    <div class="progress-note">進度只儲存在這台裝置的瀏覽器中（電腦版與手機版共用，不同裝置不會同步）。</div>
+  </div>
+
   <div class="footer-note">
     <div>
-  本模擬遊戲玩法參考自 Build the Bridge（zerethon.com）等線上橋樑建造遊戲，
-  由本科技中心為教學需求改作並擴充（含教學關、沙盒模式與繁體中文介面），
-  僅供非營利教育推廣用途。歡迎教師以連結方式引導學生使用。
+      本模擬系統為非營利教育推廣用途，靈感啟發自經典桁架工程力學與線上物理模擬遊戲。<br>
+      由本科技中心針對教學及遊玩重新設計優化開發，若有授課需求歡迎自由運用於教學。
     </div>
     <!-- 數據儀表板入口圖示按鈕 -->
     <a href="dashboard.html" class="btn-dashboard">
@@ -260,7 +294,158 @@
   </div>
 </div>
 
+<script src="physics-core.js?v=2"></script>
 <script>
+// ===== 本機進度徽章（讀取經典模式存在瀏覽器的最佳分數）=====
+(function () {
+  var KEY = "canyon_bridge_v10_dynamic_economy", STAGES = 10;
+  var chips = document.getElementById("progress-chips");
+  var summary = document.getElementById("progress-summary");
+  if (!chips || !summary) return;
+  var done = 0, record = 0, bests = [];
+  try {
+    for (var i = 1; i <= STAGES; i++) {
+      var b = parseInt(localStorage.getItem(KEY + "_best_" + i) || "0", 10) || 0;
+      bests.push(b);
+      if (b > 0) done++;
+    }
+    record = parseInt(localStorage.getItem(KEY + "_record") || "0", 10) || 0;
+  } catch (err) {}
+  bests.length = STAGES;
+  for (var k = 0; k < STAGES; k++) {
+    var chip = document.createElement("div");
+    chip.className = "chip" + (bests[k] > 0 ? " done" : "");
+    chip.textContent = k + 1;
+    chip.title = bests[k] > 0 ? "第 " + (k + 1) + " 關最佳：" + bests[k] : "第 " + (k + 1) + " 關尚未通過";
+    chips.appendChild(chip);
+  }
+  summary.textContent = done === 0 ? "尚未開始，先從經典挑戰的教學關試試看吧"
+    : done === STAGES ? "🎉 全部通過！累計最高總分 " + record.toLocaleString()
+    : "已通過 " + done + " / " + STAGES + " 關・累計最高總分 " + record.toLocaleString();
+})();
+
+// ===== 背景示範橋：用共用物理核心即時模擬（輕載通過 → 重載斷裂 → 重建）=====
+(function () {
+  var cv = document.getElementById("demo-bg"), cap = document.getElementById("demo-caption");
+  if (!cv || typeof BridgePhysics === "undefined") return;
+  var ctx = cv.getContext("2d");
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var W = 900, H = 460, X0 = 150, ST = 75, ROAD_Y = 240, TOP_Y = 165, RIVER_Y = 410, FD = 1 / 60;
+  var nodes, members, order, road, reveal, phase, t, truck, weight, lastCap = "";
+
+  function addNode(id, x, y, fixed) { var n = { id: id, x: x, y: y, px: x, py: y, mass: 1, isFixed: fixed }; nodes.set(id, n); return n; }
+  function link(a, b, isRoad) {
+    var A = nodes.get(a), B = nodes.get(b);
+    var m = { key: a + b, n1: a, n2: b, restLength: Math.hypot(A.x - B.x, A.y - B.y), ruptured: false, isRoad: isRoad, axialForce: 0, stressRatio: 0, overTicks: 0 };
+    members.set(m.key, m); order.push(m);
+  }
+  function build() {
+    nodes = new Map(); members = new Map(); order = []; road = [];
+    for (var c = 0; c < 9; c++) {
+      road[c] = addNode("r" + c, X0 + c * ST, ROAD_Y, c === 0 || c === 8);
+      if (c >= 1 && c <= 7) addNode("t" + c, X0 + c * ST, TOP_Y, false);
+    }
+    for (c = 0; c < 8; c++) link("r" + c, "r" + (c + 1), true);
+    for (c = 1; c < 7; c++) link("t" + c, "t" + (c + 1), false);
+    for (c = 0; c < 8; c++) { if (c % 2 === 0) link("r" + c, "t" + (c + 1), false); else link("t" + c, "r" + (c + 1), false); }
+    for (c = 1; c <= 7; c++) link("r" + c, "t" + c, false);
+    BridgePhysics.presettle(nodes, members);
+  }
+  function setCaption(s) { if (s !== lastCap && cap) { cap.textContent = s; cap.style.display = s ? "" : "none"; lastCap = s; } }
+  function startRun(w) { weight = w; truck = { x: 70, y: ROAD_Y - 8, vy: 0, falling: false, pitch: 0 }; }
+  function reset() { build(); reveal = 0; t = 0; phase = "build"; truck = null; setCaption("🔧 示範：三角形桁架正在搭建…"); }
+
+  function segmentAt(x) {
+    for (var i = 0; i < 8; i++) {
+      if (x >= road[i].x && x <= road[i + 1].x) return i;
+    }
+    return -1;
+  }
+  function step() {
+    var load = null, dt = FD;
+    if (phase === "build") { t += dt; reveal = Math.min(order.length, Math.floor(t / 2.2 * order.length)); if (t > 2.6) { t = 0; startRun(1.5); phase = "run1"; setCaption("🚚 1.5 t 小卡車：安全通過 ✓"); } }
+    else if (phase === "run1" || phase === "run2") {
+      var tr = truck;
+      if (tr.falling) {
+        tr.vy += 900 * dt; tr.y += tr.vy * dt; tr.x += 18 * dt;
+        if (tr.y > RIVER_Y + 40) { phase = "fail"; t = 0; setCaption("💥 橋斷了！換你設計更堅固的橋"); }
+      } else {
+        tr.x += 125 * dt;
+        var i = segmentAt(tr.x);
+        if (i >= 0) {
+          var m = members.get("r" + i + "r" + (i + 1));
+          if (m.ruptured) { tr.falling = true; }
+          else {
+            var f = (tr.x - road[i].x) / ST;
+            tr.y = road[i].y + (road[i + 1].y - road[i].y) * f - 8;
+            tr.pitch = Math.atan2(road[i + 1].y - road[i].y, ST);
+            load = { left: road[i], right: road[i + 1], frac: f, payload: BridgePhysics.payloadFor(weight) };
+          }
+        } else if (tr.x > 760) {
+          t = 0;
+          if (phase === "run1") { phase = "gap"; } else { phase = "fail"; setCaption("🔁 再來一次…"); }
+        }
+      }
+    } else if (phase === "gap") { t += dt; if (t > 0.8) { phase = "run2"; startRun(7); setCaption("🚛 7 t 重卡：橋樑超載中，注意桿件變紅…"); } }
+    else if (phase === "fail") { t += dt; if (t > 2.6) reset(); }
+    var res = BridgePhysics.advance(nodes, members, { load: load });
+    if (res.weakest && phase === "run2") { res.weakest.ruptured = true; }
+  }
+
+  function draw() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2), vw = innerWidth, vh = innerHeight;
+    if (cv.width !== Math.round(vw * dpr) || cv.height !== Math.round(vh * dpr)) { cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr); }
+    var s = Math.max(0.7, Math.min(1.5, vw / 900)), ox = (vw - W * s) / 2, oy = vh - H * s;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, vw, vh);
+    ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
+    var L = -ox / s - 10, R = (vw - ox) / s + 10, B = (vh - oy) / s + 10;
+    ctx.fillStyle = "#0c4a6e"; ctx.fillRect(L, RIVER_Y, R - L, B - RIVER_Y);
+    ctx.fillStyle = "#1e293b"; ctx.fillRect(L, ROAD_Y, X0 - L, B - ROAD_Y); ctx.fillRect(X0 + 8 * ST, ROAD_Y, R - X0 - 8 * ST, B - ROAD_Y);
+    ctx.fillStyle = "#3f6212"; ctx.fillRect(L, ROAD_Y, X0 - L, 5); ctx.fillRect(X0 + 8 * ST, ROAD_Y, R - X0 - 8 * ST, 5);
+    ctx.lineCap = "round";
+    order.forEach(function (m, idx) {
+      if (m.ruptured || idx >= reveal) return;
+      var a = nodes.get(m.n1), b = nodes.get(m.n2), r = m.stressRatio;
+      ctx.strokeStyle = r < 0.5 ? (m.isRoad ? "#94a3b8" : "#34d399") : r < 0.85 ? "#fbbf24" : "#f87171";
+      ctx.lineWidth = m.isRoad ? 6 : 4;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+    ctx.fillStyle = "#e2e8f0";
+    nodes.forEach(function (n) { if (reveal > 0) { ctx.beginPath(); ctx.arc(n.x, n.y, 4, 0, 6.2832); ctx.fill(); } });
+    if (truck) {
+      // 與遊戲內相同的卡車造型與尺寸（全長約 53）
+      ctx.save(); ctx.translate(truck.x, truck.y); ctx.rotate(truck.falling ? 0.35 : (truck.pitch || 0));
+      var poly = function (pts, fill) { ctx.fillStyle = fill; ctx.beginPath(); ctx.moveTo(pts[0], pts[1]); for (var q = 2; q < pts.length; q += 2) ctx.lineTo(pts[q], pts[q + 1]); ctx.closePath(); ctx.fill(); };
+      var disc = function (cx, cy, r, fill) { ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.2832); ctx.fill(); };
+      poly([-24, -18, 2, -18, 2, -2, -24, -2], "#0284c7");
+      poly([-22, -16, 0, -16, 0, -4, -22, -4], "#0369a1");
+      poly([4, -2, 4, -19, 16, -19, 25, -10, 25, -2], "#38bdf8");
+      poly([7, -16, 15, -16, 22, -10, 7, -10], "rgba(15,23,42,0.8)");
+      poly([-26, -2, 27, -2, 27, 2, -26, 2], "#1e293b");
+      disc(-14, 3, 5.5, "#0f172a"); disc(-14, 3, 2.2, "#94a3b8");
+      disc(16, 3, 5.5, "#0f172a"); disc(16, 3, 2.2, "#94a3b8");
+      disc(25.5, -5, 2, "#fef08a");
+      ctx.restore();
+    }
+  }
+
+  var acc = 0, last = 0;
+  function frame(ts) {
+    if (!last) last = ts;
+    acc = Math.min(acc + Math.min(0.1, (ts - last) / 1000), FD * 3); last = ts;
+    while (acc >= FD) { step(); acc -= FD; }
+    draw();
+    requestAnimationFrame(frame);
+  }
+  document.addEventListener("visibilitychange", function () { last = 0; });
+  window.addEventListener("resize", function () { if (reduce) draw(); });
+
+  reset();
+  if (reduce) { reveal = order.length; phase = "static"; setCaption("示範橋（已依系統設定停用動畫）"); draw(); }
+  else requestAnimationFrame(frame);
+  window.__demoBridge = { get phase() { return phase; }, step: step, get truck() { return truck; }, get members() { return members; } };
+})();
+
 // 依裝置突顯建議的版本（僅視覺提示，不會強制跳轉）
 (function () {
   try {
